@@ -1,131 +1,40 @@
 <!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Forex Backtester project wiki - Architecture">
-  <title>Architecture · Forex Backtester Wiki</title>
-  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="assets/styles.css">
-</head>
-<body data-page="architecture.html">
-  <header class="topbar">
-    <button class="menu-button" id="menuButton" aria-label="Open navigation">☰</button>
-    <a class="brand" href="index.html"><span class="brand-mark">FB</span><span><strong>Forex Backtester</strong><small>Project Wiki</small></span></a>
-    <div class="topbar-meta"><span class="badge">Static documentation</span><span class="updated">Updated 4 Sep 2026</span></div>
-  </header>
-
-  <div class="layout">
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-search-wrap">
-        <label class="sr-only" for="navSearch">Filter navigation</label>
-        <input id="navSearch" class="sidebar-search" type="search" placeholder="Filter pages…" autocomplete="off">
-      </div>
-      <nav class="sidebar-nav" aria-label="Wiki navigation">
-        <div class="nav-group"><div class="nav-group-title">Overview</div><a class="nav-link" href="index.html" data-search="home">Home</a></div><div class="nav-group"><div class="nav-group-title">Platform</div><a class="nav-link" href="data.html" data-search="market data">Market Data</a><a class="nav-link" href="engine.html" data-search="backtest engine">Backtest Engine</a><a class="nav-link" href="strategies.html" data-search="strategy development">Strategy Development</a><a class="nav-link" href="time.html" data-search="time &amp; sessions">Time &amp; Sessions</a></div><div class="nav-group"><div class="nav-group-title">Strategy Work</div><a class="nav-link" href="orb.html" data-search="orb foundation">ORB Foundation</a></div><div class="nav-group"><div class="nav-group-title">Project</div><a class="nav-link active" href="architecture.html" data-search="architecture">Architecture</a><a class="nav-link" href="roadmap.html" data-search="roadmap">Roadmap</a></div>
-      </nav>
-      <div class="sidebar-footer">
-        <span>Generic platform first.</span>
-        <span>Strategies remain isolated.</span>
-      </div>
-    </aside>
-
-    <main class="content">
-      <div class="breadcrumbs"><a href="index.html">Wiki</a><span>›</span><span>Architecture</span></div>
-      <article class="article">
-        <div class="article-heading">
-          <p class="eyebrow">Forex Backtester</p>
-          <h1>Architecture</h1>
-        </div>
-        
-        <div class="prose">
-          <h2 id="current-folder-philosophy">26. Current Folder Philosophy</h2>
-<p>The exact list of files will evolve, but the important separation is:</p>
-<pre><code class="language-text">src/
-
-  data/
-      market-data access
-
-  backtest/
-      generic backtesting engine
-
-  time/
-      generic time/session/timezone tools
-
-  strategies/
-      strategy-interface.js
-
-      orb/
-          ORB-specific implementation
-
-      test/
-          test-only strategy implementations
-
-      other future strategies...
-
-  tests/
-      automated validation of the components above
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Forex Backtester project wiki - Architecture"><title>Architecture · Forex Backtester Wiki</title><link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="assets/styles.css"></head>
+<body data-page="architecture.html"><header class="topbar"><button class="menu-button" id="menuButton" aria-label="Open navigation">☰</button><a class="brand" href="index.html"><span class="brand-mark">FB</span><span><strong>Forex Backtester</strong><small>Project Wiki</small></span></a><div class="topbar-meta"><span class="badge">Static documentation</span><span class="updated">Updated 4 Sep 2026</span></div></header>
+<div class="layout"><aside class="sidebar" id="sidebar"><div class="sidebar-search-wrap"><label class="sr-only" for="navSearch">Filter navigation</label><input id="navSearch" class="sidebar-search" type="search" placeholder="Filter pages…" autocomplete="off"></div><nav class="sidebar-nav" aria-label="Wiki navigation"><div class="nav-group"><div class="nav-group-title">Overview</div><a class="nav-link" href="index.html" data-search="home status">Home</a></div><div class="nav-group"><div class="nav-group-title">Platform</div><a class="nav-link" href="data.html" data-search="market data d1 oanda">Market Data</a><a class="nav-link" href="engine.html" data-search="backtest engine execution">Backtest Engine</a><a class="nav-link" href="strategies.html" data-search="strategy development trade intent">Strategy Development</a><a class="nav-link" href="time.html" data-search="time sessions timeframe">Time &amp; Sessions</a></div><div class="nav-group"><div class="nav-group-title">Strategy Work</div><a class="nav-link" href="orb.html" data-search="orb opening range breakout">ORB Strategy</a></div><div class="nav-group"><div class="nav-group-title">Project</div><a class="nav-link active" href="architecture.html" data-search="architecture">Architecture</a><a class="nav-link" href="roadmap.html" data-search="roadmap research sweeps ai pine">Roadmap</a></div></nav><div class="sidebar-footer"><span>Generic platform first.</span><span>Strategies remain isolated.</span></div></aside>
+<main class="content"><div class="breadcrumbs"><a href="index.html">Wiki</a><span>›</span><span>Architecture</span></div><article class="article"><div class="article-heading"><p class="eyebrow">Forex Backtester</p><h1>Architecture</h1></div><div class="prose">
+<h2 id="folder-model">Current Folder Model</h2><pre><code class="language-text">src/
+  backtest/      runner, service, context, summaries
+  data/          OANDA, D1, import and candle access
+  market/        instrument and timeframe metadata
+  strategies/    generic contracts + strategy folders
+    orb/          ORB implementation
+  time/          timezone and session utilities
+  tests/         focused regression tests
+  import-history.js
 </code></pre>
-<p>The key principle is:</p>
-<blockquote>
-<p>If a capability could be useful to many strategies, build it generically. If it describes how one particular strategy works, keep it inside that strategy.</p>
-</blockquote>
-<hr/>
-<hr/>
-<h2 id="the-mental-model-to-keep-in-your-head">27. The Mental Model to Keep in Your Head</h2>
-<p>You do not need to understand every line of JavaScript to understand the system.</p>
-<p>The most useful mental model is:</p>
-<pre><code class="language-text">                 D1
-                  |
-                  v
-             Candle Reader
-                  |
-                  v
-          Backtest Runner
-                  |
-          +-------+-------+
-          |               |
-          v               v
-    Strategy Context    Execution
-          |               |
-          v               v
-       Strategy          Trades
-          |               |
-          |               v
-          +-----------&gt; Results
+<p>The project was deliberately cleaned up after the initial build phase so development scaffolding does not become part of the long-term architecture.</p>
+<h2 id="mental-model">Mental Model</h2><pre><code class="language-text">OANDA -> D1 -> Candle Reader -> Backtest Service
+                                 |
+                                 v
+                        Strategy Candles
+                                 |
+                                 v
+                          Strategy Context
+                                 |
+                                 v
+                             Strategy
+                                 |
+                                 v
+                          Trade Intent
+                                 |
+                                 v
+Execution Candles --------> Backtest Runner
+                                 |
+                                 v
+                         Trades + Summary
 </code></pre>
-<p>At every historical candle the strategy is effectively being asked:</p>
-<blockquote>
-<p>Here is everything you are allowed to know at this moment in history. What do you want to do?</p>
-</blockquote>
-<p>It can answer:</p>
-<pre><code class="language-text">nothing
-</code></pre>
-<p>or:</p>
-<pre><code class="language-text">ENTER LONG
-</code></pre>
-<p>Later the strategy contract can grow to support things such as:</p>
-<pre><code class="language-text">EXIT
-MOVE STOP
-TAKE PARTIAL
-</code></pre>
-<p>The strategy decides what it wants. The engine handles execution and records what actually happened.</p>
-<hr/>
-
-        </div>
-      </article>
-      <footer class="page-footer">Forex Backtester Project Wiki · Static HTML · Ready for GitHub and Cloudflare Pages</footer>
-    </main>
-
-    <aside class="toc" aria-label="On this page">
-      <div class="toc-inner">
-        <div class="toc-title">On this page</div>
-        <a class="toc-link h2" href="#current-folder-philosophy">26. Current Folder Philosophy</a><a class="toc-link h2" href="#the-mental-model-to-keep-in-your-head">27. The Mental Model to Keep in Your Head</a>
-      </div>
-    </aside>
-  </div>
-
-  <div class="scrim" id="scrim"></div>
-  <script src="assets/wiki.js"></script>
-</body>
-</html>
+<h2 id="boundaries">Important Boundaries</h2><ul><li><strong>Data layer:</strong> knows how to retrieve market history.</li><li><strong>Market layer:</strong> describes instrument/timeframe facts needed by the engine.</li><li><strong>Strategy layer:</strong> contains decision logic and state.</li><li><strong>Execution layer:</strong> converts executable intents into simulated fills and outcomes.</li><li><strong>Time layer:</strong> provides reusable timezone/session behaviour.</li></ul>
+<blockquote><p>If a capability is useful to many strategies, build it generically. If it describes how one strategy behaves, keep it inside that strategy.</p></blockquote>
+<h2 id="design-direction">Design Direction</h2><p>The service boundary around <code>runBacktestJob()</code> is intentional. It is the natural place for future APIs, parameter sweeps and AI tools to invoke deterministic backtests without needing to understand the runner internals.</p>
+</div></article><footer class="page-footer">Forex Backtester Project Wiki · Static HTML · GitHub + Cloudflare Pages</footer></main><aside class="toc" aria-label="On this page"><div class="toc-inner"><div class="toc-title">On this page</div><a class="toc-link h2" href="#folder-model">Current Folder Model</a><a class="toc-link h2" href="#mental-model">Mental Model</a><a class="toc-link h2" href="#boundaries">Important Boundaries</a><a class="toc-link h2" href="#design-direction">Design Direction</a></div></aside></div><div class="scrim" id="scrim"></div><script src="assets/wiki.js"></script></body></html>

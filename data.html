@@ -1,134 +1,49 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Forex Backtester project wiki - Market Data">
   <title>Market Data · Forex Backtester Wiki</title>
-  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="assets/styles.css">
 </head>
 <body data-page="data.html">
-  <header class="topbar">
-    <button class="menu-button" id="menuButton" aria-label="Open navigation">☰</button>
-    <a class="brand" href="index.html"><span class="brand-mark">FB</span><span><strong>Forex Backtester</strong><small>Project Wiki</small></span></a>
-    <div class="topbar-meta"><span class="badge">Static documentation</span><span class="updated">Updated 4 Sep 2026</span></div>
-  </header>
+<header class="topbar"><button class="menu-button" id="menuButton" aria-label="Open navigation">☰</button><a class="brand" href="index.html"><span class="brand-mark">FB</span><span><strong>Forex Backtester</strong><small>Project Wiki</small></span></a><div class="topbar-meta"><span class="badge">Static documentation</span><span class="updated">Updated 4 Sep 2026</span></div></header>
+<div class="layout">
+<aside class="sidebar" id="sidebar"><div class="sidebar-search-wrap"><label class="sr-only" for="navSearch">Filter navigation</label><input id="navSearch" class="sidebar-search" type="search" placeholder="Filter pages…" autocomplete="off"></div><nav class="sidebar-nav" aria-label="Wiki navigation"><div class="nav-group"><div class="nav-group-title">Overview</div><a class="nav-link" href="index.html" data-search="home status">Home</a></div><div class="nav-group"><div class="nav-group-title">Platform</div><a class="nav-link active" href="data.html" data-search="market data d1 oanda">Market Data</a><a class="nav-link" href="engine.html" data-search="backtest engine execution">Backtest Engine</a><a class="nav-link" href="strategies.html" data-search="strategy development trade intent">Strategy Development</a><a class="nav-link" href="time.html" data-search="time sessions timeframe">Time &amp; Sessions</a></div><div class="nav-group"><div class="nav-group-title">Strategy Work</div><a class="nav-link" href="orb.html" data-search="orb opening range breakout">ORB Strategy</a></div><div class="nav-group"><div class="nav-group-title">Project</div><a class="nav-link" href="architecture.html" data-search="architecture">Architecture</a><a class="nav-link" href="roadmap.html" data-search="roadmap research sweeps ai pine">Roadmap</a></div></nav><div class="sidebar-footer"><span>Generic platform first.</span><span>Strategies remain isolated.</span></div></aside>
+<main class="content"><div class="breadcrumbs"><a href="index.html">Wiki</a><span>›</span><span>Market Data</span></div><article class="article"><div class="article-heading"><p class="eyebrow">Forex Backtester</p><h1>Market Data</h1></div><div class="prose">
+<h2 id="storage-model">Storage Model</h2>
+<p>Historical candles are stored in Cloudflare D1. The current EUR/USD database contains native OANDA M1 and M5 candles. The design is to shard by instrument rather than by timeframe, so one instrument database can contain multiple granularities.</p>
+<pre><code class="language-text">EUR_USD database
+  candles: M1, M5, future native timeframes
 
-  <div class="layout">
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-search-wrap">
-        <label class="sr-only" for="navSearch">Filter navigation</label>
-        <input id="navSearch" class="sidebar-search" type="search" placeholder="Filter pages…" autocomplete="off">
-      </div>
-      <nav class="sidebar-nav" aria-label="Wiki navigation">
-        <div class="nav-group"><div class="nav-group-title">Overview</div><a class="nav-link" href="index.html" data-search="home">Home</a></div><div class="nav-group"><div class="nav-group-title">Platform</div><a class="nav-link active" href="data.html" data-search="market data">Market Data</a><a class="nav-link" href="engine.html" data-search="backtest engine">Backtest Engine</a><a class="nav-link" href="strategies.html" data-search="strategy development">Strategy Development</a><a class="nav-link" href="time.html" data-search="time &amp; sessions">Time &amp; Sessions</a></div><div class="nav-group"><div class="nav-group-title">Strategy Work</div><a class="nav-link" href="orb.html" data-search="orb foundation">ORB Foundation</a></div><div class="nav-group"><div class="nav-group-title">Project</div><a class="nav-link" href="architecture.html" data-search="architecture">Architecture</a><a class="nav-link" href="roadmap.html" data-search="roadmap">Roadmap</a></div>
-      </nav>
-      <div class="sidebar-footer">
-        <span>Generic platform first.</span>
-        <span>Strategies remain isolated.</span>
-      </div>
-    </aside>
-
-    <main class="content">
-      <div class="breadcrumbs"><a href="index.html">Wiki</a><span>›</span><span>Market Data</span></div>
-      <article class="article">
-        <div class="article-heading">
-          <p class="eyebrow">Forex Backtester</p>
-          <h1>Market Data</h1>
-        </div>
-        
-        <div class="prose">
-          <h2 id="historical-market-data">2. Historical Market Data</h2>
-<p>Historical data is stored in <strong>Cloudflare D1</strong>.</p>
-<p>Current dataset:</p>
-<ul>
-<li>Instrument: <code>EUR_USD</code></li>
-<li>Granularity: <code>M1</code></li>
-<li>Approximate history: 2021 to 2026</li>
-<li>Around 2.09 million candles</li>
-<li>Source: OANDA</li>
-<li>Stored once centrally so backtests do not need to repeatedly download market data</li>
-</ul>
-<p>Each candle contains:</p>
-<pre><code class="language-text">time
-volume
-
-bid OHLC
-ask OHLC
-mid OHLC
+GBP_USD database
+  candles: M1, M5, ...
 </code></pre>
-<p>Conceptually:</p>
-<pre><code class="language-javascript">candle = {
+<p>The <code>instrument</code> and <code>granularity</code> columns remain part of the candle key even though each database is conceptually an instrument shard.</p>
+<h2 id="candle-shape">Candle Shape</h2>
+<p>OANDA candles are normalised into a common structure containing time, volume and BID / ASK / MID OHLC values.</p>
+<pre><code class="language-javascript">{
   time,
+  volume,
   bid: { open, high, low, close },
   ask: { open, high, low, close },
-  mid: { open, high, low, close },
-  volume
+  mid: { open, high, low, close }
 }
 </code></pre>
-<p>This is a strong foundation because we are not limited to a single chart price. We have OANDA BID, ASK and MID prices.</p>
-<hr/>
-<hr/>
-<h2 id="bid-ask-and-mid">3. BID, ASK and MID</h2>
-<p>We deliberately use different prices for <strong>strategy logic</strong> and <strong>trade execution</strong>.</p>
-<h3 id="strategy-calculations-use-mid">Strategy calculations use MID</h3>
-<p>Examples:</p>
-<ul>
-<li>Opening range high and low</li>
-<li>Moving averages</li>
-<li>Breakout levels</li>
-<li>Indicators</li>
-</ul>
-<p>MID is a sensible chart-level price and broadly matches the sort of price logic a strategy sees visually.</p>
-<h3 id="trade-execution-uses-bid-ask">Trade execution uses BID / ASK</h3>
-<p>For a <strong>LONG</strong>:</p>
-<pre><code class="language-text">enter at ASK
-exit at BID
+<p>Strategy calculations use MID. Trade execution uses BID / ASK so spread is represented naturally.</p>
+<h2 id="database-selection">Database Selection</h2>
+<p>The D1 client resolves the database from the instrument using environment variables such as:</p>
+<pre><code class="language-text">CLOUDFLARE_D1_EUR_USD_DATABASE_ID
+CLOUDFLARE_D1_GBP_USD_DATABASE_ID
 </code></pre>
-<p>For a <strong>SHORT</strong>:</p>
-<pre><code class="language-text">enter at BID
-exit at ASK
+<p>This keeps database selection generic as more instruments are added.</p>
+<h2 id="historical-import">Historical Import</h2>
+<p>The importer is generic over instrument, granularity and date range. Import progress is stored in the same D1 database so a historical load can resume after interruption.</p>
+<pre><code class="language-text">npm run import-history -- EUR_USD M5 2021-01-03 2026-09-01
 </code></pre>
-<p>This means the spread is naturally represented in the backtest rather than every trade unrealistically using one price.</p>
-<hr/>
-<hr/>
-<h2 id="candle-reader">4. Candle Reader</h2>
-<p>File:</p>
-<pre><code class="language-text">src/data/candle-reader.js
-</code></pre>
-<p>Its job is simple:</p>
-<blockquote>
-<p>Fetch a requested section of historical candles from D1 and return them in the standard candle structure.</p>
-</blockquote>
-<p>Example:</p>
-<pre><code class="language-javascript">getCandles({
-  instrument: "EUR_USD",
-  granularity: "M1",
-  from: "...",
-  to: "..."
-});
-</code></pre>
-<p>It handles paging through D1 when more than one query page is required.</p>
-<p>The rest of the application does not need to know how D1 works. It simply receives:</p>
-<pre><code class="language-text">[candle, candle, candle, candle, ...]
-</code></pre>
-<hr/>
-
-        </div>
-      </article>
-      <footer class="page-footer">Forex Backtester Project Wiki · Static HTML · Ready for GitHub and Cloudflare Pages</footer>
-    </main>
-
-    <aside class="toc" aria-label="On this page">
-      <div class="toc-inner">
-        <div class="toc-title">On this page</div>
-        <a class="toc-link h2" href="#historical-market-data">2. Historical Market Data</a><a class="toc-link h2" href="#bid-ask-and-mid">3. BID, ASK and MID</a><a class="toc-link h3" href="#strategy-calculations-use-mid">Strategy calculations use MID</a><a class="toc-link h3" href="#trade-execution-uses-bid-ask">Trade execution uses BID / ASK</a><a class="toc-link h2" href="#candle-reader">4. Candle Reader</a>
-      </div>
-    </aside>
-  </div>
-
-  <div class="scrim" id="scrim"></div>
-  <script src="assets/wiki.js"></script>
-</body>
-</html>
+<p>The canonical schema contains two tables: <code>candles</code> and <code>import_progress</code>.</p>
+<h2 id="candle-reader">Candle Reader</h2>
+<p><code>src/data/candle-reader.js</code> returns chronological candles for a requested instrument, timeframe and date window. It uses keyset paging so callers do not need to care how many D1 query pages are required.</p>
+</div></article><footer class="page-footer">Forex Backtester Project Wiki · Static HTML · GitHub + Cloudflare Pages</footer></main>
+<aside class="toc" aria-label="On this page"><div class="toc-inner"><div class="toc-title">On this page</div><a class="toc-link h2" href="#storage-model">Storage Model</a><a class="toc-link h2" href="#candle-shape">Candle Shape</a><a class="toc-link h2" href="#database-selection">Database Selection</a><a class="toc-link h2" href="#historical-import">Historical Import</a><a class="toc-link h2" href="#candle-reader">Candle Reader</a></div></aside>
+</div><div class="scrim" id="scrim"></div><script src="assets/wiki.js"></script></body></html>

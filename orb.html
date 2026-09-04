@@ -1,155 +1,23 @@
 <!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Forex Backtester project wiki - ORB Foundation">
-  <title>ORB Foundation · Forex Backtester Wiki</title>
-  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="assets/styles.css">
-</head>
-<body data-page="orb.html">
-  <header class="topbar">
-    <button class="menu-button" id="menuButton" aria-label="Open navigation">☰</button>
-    <a class="brand" href="index.html"><span class="brand-mark">FB</span><span><strong>Forex Backtester</strong><small>Project Wiki</small></span></a>
-    <div class="topbar-meta"><span class="badge">Static documentation</span><span class="updated">Updated 4 Sep 2026</span></div>
-  </header>
-
-  <div class="layout">
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-search-wrap">
-        <label class="sr-only" for="navSearch">Filter navigation</label>
-        <input id="navSearch" class="sidebar-search" type="search" placeholder="Filter pages…" autocomplete="off">
-      </div>
-      <nav class="sidebar-nav" aria-label="Wiki navigation">
-        <div class="nav-group"><div class="nav-group-title">Overview</div><a class="nav-link" href="index.html" data-search="home">Home</a></div><div class="nav-group"><div class="nav-group-title">Platform</div><a class="nav-link" href="data.html" data-search="market data">Market Data</a><a class="nav-link" href="engine.html" data-search="backtest engine">Backtest Engine</a><a class="nav-link" href="strategies.html" data-search="strategy development">Strategy Development</a><a class="nav-link" href="time.html" data-search="time &amp; sessions">Time &amp; Sessions</a></div><div class="nav-group"><div class="nav-group-title">Strategy Work</div><a class="nav-link active" href="orb.html" data-search="orb foundation">ORB Foundation</a></div><div class="nav-group"><div class="nav-group-title">Project</div><a class="nav-link" href="architecture.html" data-search="architecture">Architecture</a><a class="nav-link" href="roadmap.html" data-search="roadmap">Roadmap</a></div>
-      </nav>
-      <div class="sidebar-footer">
-        <span>Generic platform first.</span>
-        <span>Strategies remain isolated.</span>
-      </div>
-    </aside>
-
-    <main class="content">
-      <div class="breadcrumbs"><a href="index.html">Wiki</a><span>›</span><span>ORB Foundation</span></div>
-      <article class="article">
-        <div class="article-heading">
-          <p class="eyebrow">Forex Backtester</p>
-          <h1>ORB Foundation</h1>
-        </div>
-        
-        <div class="prose">
-          <h2 id="orb-specific-code">21. ORB-Specific Code</h2>
-<p>ORB-specific logic has been moved under:</p>
-<pre><code class="language-text">src/strategies/orb/
-</code></pre>
-<p>Current ORB components include:</p>
-<pre><code class="language-text">opening-range.js
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Forex Backtester project wiki - ORB Strategy"><title>ORB Strategy · Forex Backtester Wiki</title><link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="assets/styles.css"></head>
+<body data-page="orb.html"><header class="topbar"><button class="menu-button" id="menuButton" aria-label="Open navigation">☰</button><a class="brand" href="index.html"><span class="brand-mark">FB</span><span><strong>Forex Backtester</strong><small>Project Wiki</small></span></a><div class="topbar-meta"><span class="badge">Static documentation</span><span class="updated">Updated 4 Sep 2026</span></div></header>
+<div class="layout"><aside class="sidebar" id="sidebar"><div class="sidebar-search-wrap"><label class="sr-only" for="navSearch">Filter navigation</label><input id="navSearch" class="sidebar-search" type="search" placeholder="Filter pages…" autocomplete="off"></div><nav class="sidebar-nav" aria-label="Wiki navigation"><div class="nav-group"><div class="nav-group-title">Overview</div><a class="nav-link" href="index.html" data-search="home status">Home</a></div><div class="nav-group"><div class="nav-group-title">Platform</div><a class="nav-link" href="data.html" data-search="market data d1 oanda">Market Data</a><a class="nav-link" href="engine.html" data-search="backtest engine execution">Backtest Engine</a><a class="nav-link" href="strategies.html" data-search="strategy development trade intent">Strategy Development</a><a class="nav-link" href="time.html" data-search="time sessions timeframe">Time &amp; Sessions</a></div><div class="nav-group"><div class="nav-group-title">Strategy Work</div><a class="nav-link active" href="orb.html" data-search="orb opening range breakout">ORB Strategy</a></div><div class="nav-group"><div class="nav-group-title">Project</div><a class="nav-link" href="architecture.html" data-search="architecture">Architecture</a><a class="nav-link" href="roadmap.html" data-search="roadmap research sweeps ai pine">Roadmap</a></div></nav><div class="sidebar-footer"><span>Generic platform first.</span><span>Strategies remain isolated.</span></div></aside>
+<main class="content"><div class="breadcrumbs"><a href="index.html">Wiki</a><span>›</span><span>ORB Strategy</span></div><article class="article"><div class="article-heading"><p class="eyebrow">Forex Backtester</p><h1>ORB Strategy</h1></div><div class="prose">
+<h2 id="current-implementation">Current Implementation</h2><p>ORB is now a complete strategy implementation under <code>src/strategies/orb/</code>:</p><pre><code class="language-text">opening-range.js
 daily-opening-range.js
-</code></pre>
-<p>This is an important architectural rule:</p>
-<blockquote>
-<p>The generic backtest engine does not know what an opening range is.</p>
-</blockquote>
-<p>ORB-specific behaviour lives inside the ORB strategy area. Generic capabilities such as timezones and sessions live outside it.</p>
-<p>That keeps the platform reusable for completely different strategies later.</p>
-<hr/>
-<hr/>
-<h2 id="opening-range">22. Opening Range</h2>
-<p><code>opening-range.js</code> currently does one focused job.</p>
-<p>During the configured session it tracks:</p>
-<pre><code class="language-text">highest MID high
-lowest MID low
-number of candles collected
-</code></pre>
-<p>For example:</p>
-<pre><code class="language-text">High: 1.16490
-Low:  1.16397
-Range: 9.3 pips
-</code></pre>
-<p>At the end of the session the range becomes complete and freezes.</p>
-<p>Later candles cannot alter that range.</p>
-<p>It also avoids marking a range as complete when the backtest started after the session and no range candles were actually seen.</p>
-<hr/>
-<hr/>
-<h2 id="daily-opening-range">23. Daily Opening Range</h2>
-<p><code>daily-opening-range.js</code> wraps the opening-range logic and handles one range per trading day:</p>
-<pre><code class="language-text">Monday range
-Tuesday range
-Wednesday range
-...
-</code></pre>
-<p>At a new trading day the previous range is reset and a new one begins.</p>
-<p>Crucially, the trading day is now determined in the <strong>strategy's timezone</strong>.</p>
-<p>For:</p>
-<pre><code class="language-javascript">timeZone: "America/New_York"
-</code></pre>
-<p>"new day" means midnight in New York, not midnight UTC.</p>
-<hr/>
-<hr/>
-<h2 id="manual-validation-against-tradingview">25. Manual Validation Against TradingView</h2>
-<p>We manually checked a real opening range against TradingView.</p>
-<p>Initially the test was manually set to:</p>
-<pre><code class="language-text">12:15 UTC
-</code></pre>
-<p>which matched the TradingView range displayed against New York time during August.</p>
-<p>The implementation was then changed properly to:</p>
-<pre><code class="language-javascript">startHour: 8,
-startMinute: 15,
-timeZone: "America/New_York"
-</code></pre>
-<p>The timezone layer automatically selected the corresponding UTC candles, and the calculated range still matched TradingView.</p>
-<p>This gives us practical evidence that these pieces are lining up correctly:</p>
-<pre><code class="language-text">D1 data
-+
-timezone conversion
-+
-session selection
-+
-opening-range calculation
-</code></pre>
-<hr/>
-<hr/>
-<h2 id="where-orb-currently-is">28. Where ORB Currently Is</h2>
-<p>We have <strong>not yet built the actual ORB trading strategy</strong>.</p>
-<p>We have built the foundation that ORB needs:</p>
-<ul>
-<li class="task-list-item"><input checked="" class="task-list-item-checkbox" disabled="" type="checkbox"/>Identify New York time</li>
-<li class="task-list-item"><input checked="" class="task-list-item-checkbox" disabled="" type="checkbox"/>Handle daylight saving automatically</li>
-<li class="task-list-item"><input checked="" class="task-list-item-checkbox" disabled="" type="checkbox"/>Identify New York trading days</li>
-<li class="task-list-item"><input checked="" class="task-list-item-checkbox" disabled="" type="checkbox"/>Know whether a candle is before, inside or after a session</li>
-<li class="task-list-item"><input checked="" class="task-list-item-checkbox" disabled="" type="checkbox"/>Collect an opening range</li>
-<li class="task-list-item"><input checked="" class="task-list-item-checkbox" disabled="" type="checkbox"/>Freeze the range once complete</li>
-<li class="task-list-item"><input checked="" class="task-list-item-checkbox" disabled="" type="checkbox"/>Reset it on the next day</li>
-<li class="task-list-item"><input checked="" class="task-list-item-checkbox" disabled="" type="checkbox"/>Validate it against real D1 data</li>
-<li class="task-list-item"><input checked="" class="task-list-item-checkbox" disabled="" type="checkbox"/>Manually match it against TradingView</li>
-</ul>
-<p>We have <strong>not</strong> yet implemented:</p>
-<ul>
-<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"/>Breakout detection</li>
-<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"/>Long / short ORB decision logic</li>
-<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"/>ORB filters</li>
-<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"/>ORB trade signals</li>
-<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"/>Actual ORB stop-loss rules</li>
-<li class="task-list-item"><input class="task-list-item-checkbox" disabled="" type="checkbox"/>Actual ORB take-profit rules</li>
-</ul>
-<p>That is intentional. We are constructing the strategy in small, verifiable layers.</p>
-<hr/>
-
-        </div>
-      </article>
-      <footer class="page-footer">Forex Backtester Project Wiki · Static HTML · Ready for GitHub and Cloudflare Pages</footer>
-    </main>
-
-    <aside class="toc" aria-label="On this page">
-      <div class="toc-inner">
-        <div class="toc-title">On this page</div>
-        <a class="toc-link h2" href="#orb-specific-code">21. ORB-Specific Code</a><a class="toc-link h2" href="#opening-range">22. Opening Range</a><a class="toc-link h2" href="#daily-opening-range">23. Daily Opening Range</a><a class="toc-link h2" href="#manual-validation-against-tradingview">25. Manual Validation Against TradingView</a><a class="toc-link h2" href="#where-orb-currently-is">28. Where ORB Currently Is</a>
-      </div>
-    </aside>
-  </div>
-
-  <div class="scrim" id="scrim"></div>
-  <script src="assets/wiki.js"></script>
-</body>
-</html>
+breakout-detector.js
+orb-strategy.js
+</code></pre><p>The generic engine does not know what an opening range or breakout is.</p>
+<h2 id="opening-range">Opening Range</h2><p>The range tracks the highest MID high and lowest MID low during the configured session, then freezes once the session is complete. <code>daily-opening-range.js</code> resets the state using the strategy timezone rather than UTC midnight.</p>
+<h2 id="breakout-detection">Breakout Detection</h2><p>After the range is complete, the breakout detector identifies the first break above or below the frozen range. If a candle spans both sides, the ORB strategy currently declines to issue an entry for that ambiguous event.</p>
+<h2 id="trade-signal">Trade Intent</h2><p>The strategy converts a breakout into the same generic contract used by any future strategy:</p><pre><code class="language-javascript">{
+  action: "ENTER",
+  side: "LONG",
+  stopLoss: { type: "PIPS", value: stopLossPips },
+  takeProfit: { type: "PIPS", value: takeProfitPips },
+  metadata: { strategy: "ORB", ... }
+}
+</code></pre><p>ORB configuration still uses convenient values such as <code>stopLossPips</code> and <code>takeProfitPips</code>; the output contract presented to the execution engine is generic.</p>
+<h2 id="regression-run">Real D1 Regression Run</h2><p>The retained integration test runs ORB against EUR/USD M5 data for August 2026 using an 08:15 New York, 60-minute opening range with a 10-pip stop and 20-pip target.</p><p>The known regression result is 17 trades for the full 1 August to 1 September window. This gives us a stable reference point while the surrounding engine evolves.</p>
+<h2 id="purpose">Why ORB Exists Here</h2><p>ORB is the first real strategy and a useful regression case, but the product is not intended to become an ORB-only backtester. It proves that a stateful, timezone-aware strategy can plug into the generic engine and produce executable intents.</p>
+</div></article><footer class="page-footer">Forex Backtester Project Wiki · Static HTML · GitHub + Cloudflare Pages</footer></main><aside class="toc" aria-label="On this page"><div class="toc-inner"><div class="toc-title">On this page</div><a class="toc-link h2" href="#current-implementation">Current Implementation</a><a class="toc-link h2" href="#opening-range">Opening Range</a><a class="toc-link h2" href="#breakout-detection">Breakout Detection</a><a class="toc-link h2" href="#trade-signal">Trade Intent</a><a class="toc-link h2" href="#regression-run">Real D1 Regression Run</a><a class="toc-link h2" href="#purpose">Why ORB Exists Here</a></div></aside></div><div class="scrim" id="scrim"></div><script src="assets/wiki.js"></script></body></html>

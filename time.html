@@ -1,141 +1,20 @@
 <!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Forex Backtester project wiki - Time &amp; Sessions">
-  <title>Time &amp; Sessions · Forex Backtester Wiki</title>
-  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="assets/styles.css">
-</head>
-<body data-page="time.html">
-  <header class="topbar">
-    <button class="menu-button" id="menuButton" aria-label="Open navigation">☰</button>
-    <a class="brand" href="index.html"><span class="brand-mark">FB</span><span><strong>Forex Backtester</strong><small>Project Wiki</small></span></a>
-    <div class="topbar-meta"><span class="badge">Static documentation</span><span class="updated">Updated 4 Sep 2026</span></div>
-  </header>
-
-  <div class="layout">
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-search-wrap">
-        <label class="sr-only" for="navSearch">Filter navigation</label>
-        <input id="navSearch" class="sidebar-search" type="search" placeholder="Filter pages…" autocomplete="off">
-      </div>
-      <nav class="sidebar-nav" aria-label="Wiki navigation">
-        <div class="nav-group"><div class="nav-group-title">Overview</div><a class="nav-link" href="index.html" data-search="home">Home</a></div><div class="nav-group"><div class="nav-group-title">Platform</div><a class="nav-link" href="data.html" data-search="market data">Market Data</a><a class="nav-link" href="engine.html" data-search="backtest engine">Backtest Engine</a><a class="nav-link" href="strategies.html" data-search="strategy development">Strategy Development</a><a class="nav-link active" href="time.html" data-search="time &amp; sessions">Time &amp; Sessions</a></div><div class="nav-group"><div class="nav-group-title">Strategy Work</div><a class="nav-link" href="orb.html" data-search="orb foundation">ORB Foundation</a></div><div class="nav-group"><div class="nav-group-title">Project</div><a class="nav-link" href="architecture.html" data-search="architecture">Architecture</a><a class="nav-link" href="roadmap.html" data-search="roadmap">Roadmap</a></div>
-      </nav>
-      <div class="sidebar-footer">
-        <span>Generic platform first.</span>
-        <span>Strategies remain isolated.</span>
-      </div>
-    </aside>
-
-    <main class="content">
-      <div class="breadcrumbs"><a href="index.html">Wiki</a><span>›</span><span>Time &amp; Sessions</span></div>
-      <article class="article">
-        <div class="article-heading">
-          <p class="eyebrow">Forex Backtester</p>
-          <h1>Time &amp; Sessions</h1>
-        </div>
-        
-        <div class="prose">
-          <h2 id="generic-time-utilities">18. Generic Time Utilities</h2>
-<p>Folder:</p>
-<pre><code class="language-text">src/time/
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Forex Backtester project wiki - Time & Sessions"><title>Time &amp; Sessions · Forex Backtester Wiki</title><link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="assets/styles.css"></head>
+<body data-page="time.html"><header class="topbar"><button class="menu-button" id="menuButton" aria-label="Open navigation">☰</button><a class="brand" href="index.html"><span class="brand-mark">FB</span><span><strong>Forex Backtester</strong><small>Project Wiki</small></span></a><div class="topbar-meta"><span class="badge">Static documentation</span><span class="updated">Updated 4 Sep 2026</span></div></header>
+<div class="layout"><aside class="sidebar" id="sidebar"><div class="sidebar-search-wrap"><label class="sr-only" for="navSearch">Filter navigation</label><input id="navSearch" class="sidebar-search" type="search" placeholder="Filter pages…" autocomplete="off"></div><nav class="sidebar-nav" aria-label="Wiki navigation"><div class="nav-group"><div class="nav-group-title">Overview</div><a class="nav-link" href="index.html" data-search="home status">Home</a></div><div class="nav-group"><div class="nav-group-title">Platform</div><a class="nav-link" href="data.html" data-search="market data d1 oanda">Market Data</a><a class="nav-link" href="engine.html" data-search="backtest engine execution">Backtest Engine</a><a class="nav-link" href="strategies.html" data-search="strategy development trade intent">Strategy Development</a><a class="nav-link active" href="time.html" data-search="time sessions timeframe">Time &amp; Sessions</a></div><div class="nav-group"><div class="nav-group-title">Strategy Work</div><a class="nav-link" href="orb.html" data-search="orb opening range breakout">ORB Strategy</a></div><div class="nav-group"><div class="nav-group-title">Project</div><a class="nav-link" href="architecture.html" data-search="architecture">Architecture</a><a class="nav-link" href="roadmap.html" data-search="roadmap research sweeps ai pine">Roadmap</a></div></nav><div class="sidebar-footer"><span>Generic platform first.</span><span>Strategies remain isolated.</span></div></aside>
+<main class="content"><div class="breadcrumbs"><a href="index.html">Wiki</a><span>›</span><span>Time &amp; Sessions</span></div><article class="article"><div class="article-heading"><p class="eyebrow">Forex Backtester</p><h1>Time &amp; Sessions</h1></div><div class="prose">
+<h2 id="timezone-model">Timezone Model</h2><p>Candle timestamps remain UTC. Strategy session logic converts those timestamps into an IANA timezone such as <code>America/New_York</code>. JavaScript's timezone support handles daylight-saving changes automatically.</p><pre><code class="language-text">summer: 12:15 UTC = 08:15 New York
+winter: 13:15 UTC = 08:15 New York
 </code></pre>
-<p>These are deliberately <strong>not ORB-specific</strong>.</p>
-<p>They provide reusable concepts such as:</p>
-<ul>
-<li>Date handling</li>
-<li>Hour and minute handling</li>
-<li>Trading-day detection</li>
-<li>Session windows</li>
-<li>Timezone conversion</li>
-</ul>
-<p>Many future strategies could need these capabilities, for example:</p>
-<pre><code class="language-text">trade only London session
-avoid New York lunchtime
-reset state every trading day
-trade the first hour of Tokyo
-calculate a US opening range
-</code></pre>
-<hr/>
-<hr/>
-<h2 id="timezone-handling">19. Timezone Handling</h2>
-<p>This was the important improvement added most recently.</p>
-<p>D1 timestamps remain permanently stored in:</p>
-<pre><code class="language-text">UTC
-</code></pre>
-<p>We do <strong>not</strong> modify the stored data.</p>
-<p>Instead, a strategy can specify an IANA timezone such as:</p>
-<pre><code class="language-javascript">timeZone: "America/New_York"
-</code></pre>
-<p>The generic time layer converts each UTC candle into the appropriate local strategy time.</p>
-<p>During US daylight saving time:</p>
-<pre><code class="language-text">12:15 UTC = 08:15 New York
-</code></pre>
-<p>During winter standard time:</p>
-<pre><code class="language-text">13:15 UTC = 08:15 New York
-</code></pre>
-<p>The strategy can therefore always express its actual intent as:</p>
-<pre><code class="language-text">08:15 New York
-</code></pre>
-<p>rather than manually changing between 12:15 and 13:15 UTC during the year.</p>
-<p>Daylight-saving changes are handled automatically by JavaScript's timezone support.</p>
-<hr/>
-<hr/>
-<h2 id="session-windows">20. Session Windows</h2>
-<p>File:</p>
-<pre><code class="language-text">src/time/session-window.js
-</code></pre>
-<p>A generic session can be described with configuration such as:</p>
-<pre><code class="language-javascript">{
+<h2 id="session-windows">Session Windows</h2><p><code>src/time/session-window.js</code> classifies a timestamp relative to a configured local session.</p><pre><code class="language-javascript">{
   startHour: 8,
   startMinute: 15,
   durationMinutes: 60,
   timeZone: "America/New_York"
 }
-</code></pre>
-<p>The session utility can classify a candle as:</p>
-<pre><code class="language-text">BEFORE
-IN_SESSION
-AFTER
-</code></pre>
-<p>For the current ORB range:</p>
-<pre><code class="language-text">08:14 -&gt; BEFORE
-08:15 -&gt; IN_SESSION
-09:14 -&gt; IN_SESSION
-09:15 -&gt; AFTER
-</code></pre>
-<p>That gives exactly 60 M1 candles from 08:15 through 09:14 inclusive.</p>
-<hr/>
-<hr/>
-<h2 id="the-timezone-test-bug-we-found">24. The Timezone Test Bug We Found</h2>
-<p>During the timezone change, the real opening-range test temporarily produced hundreds of duplicate ranges.</p>
-<p>The reason was useful to understand:</p>
-<pre><code class="language-text">ORB component = comparing New York dates
-test script    = comparing UTC dates
-</code></pre>
-<p>For several hours each day, the UTC date and New York date are different.</p>
-<p>The test therefore thought the day had changed repeatedly and stored the same completed range many times.</p>
-<p>The test was corrected to use the same <code>America/New_York</code> date interpretation as the strategy.</p>
-<p>This was a good demonstration of why timezone handling needs to be a first-class platform capability rather than a hard-coded ORB workaround.</p>
-<hr/>
-
-        </div>
-      </article>
-      <footer class="page-footer">Forex Backtester Project Wiki · Static HTML · Ready for GitHub and Cloudflare Pages</footer>
-    </main>
-
-    <aside class="toc" aria-label="On this page">
-      <div class="toc-inner">
-        <div class="toc-title">On this page</div>
-        <a class="toc-link h2" href="#generic-time-utilities">18. Generic Time Utilities</a><a class="toc-link h2" href="#timezone-handling">19. Timezone Handling</a><a class="toc-link h2" href="#session-windows">20. Session Windows</a><a class="toc-link h2" href="#the-timezone-test-bug-we-found">24. The Timezone Test Bug We Found</a>
-      </div>
-    </aside>
-  </div>
-
-  <div class="scrim" id="scrim"></div>
-  <script src="assets/wiki.js"></script>
-</body>
-</html>
+</code></pre><p>The result is <code>BEFORE</code>, <code>IN_SESSION</code> or <code>AFTER</code>. ORB uses this generic utility rather than embedding timezone calculations in the strategy.</p>
+<h2 id="strategy-timeframes">Strategy Candle Timing</h2><p>The backtest engine treats the timestamp on an OANDA candle as the candle start. A strategy cannot use the final OHLC of an M5 candle stamped 09:15 until that candle has closed at 09:20.</p><p>The current runner supports fixed S/M/H timeframes through <code>src/market/timeframe.js</code>. This is deliberately explicit; daily or other variable-session candle semantics should not be faked as a fixed 24-hour duration.</p>
+<h2 id="two-series">Two Time Series</h2><p>Strategy and execution timeframes are independent inputs to a backtest job. For example:</p><pre><code class="language-text">strategy:  M5
+execution: M1
+</code></pre><p>The strategy still makes decisions only on completed M5 candles, while position entry and protection checks use the M1 sequence.</p>
+</div></article><footer class="page-footer">Forex Backtester Project Wiki · Static HTML · GitHub + Cloudflare Pages</footer></main><aside class="toc" aria-label="On this page"><div class="toc-inner"><div class="toc-title">On this page</div><a class="toc-link h2" href="#timezone-model">Timezone Model</a><a class="toc-link h2" href="#session-windows">Session Windows</a><a class="toc-link h2" href="#strategy-timeframes">Strategy Candle Timing</a><a class="toc-link h2" href="#two-series">Two Time Series</a></div></aside></div><div class="scrim" id="scrim"></div><script src="assets/wiki.js"></script></body></html>
