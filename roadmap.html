@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Forex Backtester project wiki - Roadmap">
+  <title>Roadmap · Forex Backtester Wiki</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body data-page="roadmap.html">
+  <header class="topbar">
+    <button class="menu-button" id="menuButton" aria-label="Open navigation">☰</button>
+    <a class="brand" href="index.html"><span class="brand-mark">FB</span><span><strong>Forex Backtester</strong><small>Project Wiki</small></span></a>
+    <div class="topbar-meta"><span class="badge">Static documentation</span><span class="updated">Updated 4 Sep 2026</span></div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-search-wrap">
+        <label class="sr-only" for="navSearch">Filter navigation</label>
+        <input id="navSearch" class="sidebar-search" type="search" placeholder="Filter pages…" autocomplete="off">
+      </div>
+      <nav class="sidebar-nav" aria-label="Wiki navigation">
+        <div class="nav-group"><div class="nav-group-title">Overview</div><a class="nav-link" href="index.html" data-search="home">Home</a></div><div class="nav-group"><div class="nav-group-title">Platform</div><a class="nav-link" href="data.html" data-search="market data">Market Data</a><a class="nav-link" href="engine.html" data-search="backtest engine">Backtest Engine</a><a class="nav-link" href="strategies.html" data-search="strategy development">Strategy Development</a><a class="nav-link" href="time.html" data-search="time &amp; sessions">Time &amp; Sessions</a></div><div class="nav-group"><div class="nav-group-title">Strategy Work</div><a class="nav-link" href="orb.html" data-search="orb foundation">ORB Foundation</a></div><div class="nav-group"><div class="nav-group-title">Project</div><a class="nav-link" href="architecture.html" data-search="architecture">Architecture</a><a class="nav-link active" href="roadmap.html" data-search="roadmap">Roadmap</a></div>
+      </nav>
+      <div class="sidebar-footer">
+        <span>Generic platform first.</span>
+        <span>Strategies remain isolated.</span>
+      </div>
+    </aside>
+
+    <main class="content">
+      <div class="breadcrumbs"><a href="index.html">Wiki</a><span>›</span><span>Roadmap</span></div>
+      <article class="article">
+        <div class="article-heading">
+          <p class="eyebrow">Forex Backtester</p>
+          <h1>Roadmap</h1>
+        </div>
+        
+        <div class="prose">
+          <h2 id="the-bigger-product-goal">29. The Bigger Product Goal</h2>
+<p>The long-term idea is a service that can eventually do something like:</p>
+<pre><code class="language-text">                  Pine Script
+                       |
+                       v
+                 Pine Parser
+                       |
+                       v
+              Internal Strategy
+                       |
+                       v
+              Backtest Platform
+                       |
+             +---------+---------+
+             |                   |
+             v                   v
+       single backtest      parameter sweep
+                                 |
+                                 v
+                         hundreds/thousands
+                           of backtests
+                                 |
+                                 v
+                              results
+</code></pre>
+<p>A user could eventually paste a TradingView strategy and ask the platform to test combinations such as:</p>
+<pre><code class="language-text">ORB duration:
+15 / 30 / 45 / 60 / 90
+
+SL:
+5 / 10 / 15 / 20
+
+TP:
+10 / 20 / 30 / 40
+
+Trading window:
+1 / 2 / 3 / 4 hours
+</code></pre>
+<p>The platform could run those combinations over years of data rather than requiring the user to manually repeat TradingView backtests.</p>
+<p>We are nowhere near the Pine parser yet. The important point is that the engine underneath is being built so that such a layer could eventually sit on top of it.</p>
+<hr/>
+<hr/>
+<h2 id="where-to-resume-next">30. Where to Resume Next</h2>
+<p>Do not add more architecture just for the sake of it.</p>
+<p>The next small step should be:</p>
+<blockquote>
+<p>Give the ORB strategy access to the completed daily opening range and detect when price first breaks above or below it.</p>
+</blockquote>
+<p>Initially, do <strong>not</strong> place a trade. First prove breakout detection itself.</p>
+<p>Example:</p>
+<pre><code class="language-text">Opening range:
+High 1.16490
+Low  1.16397
+
+09:46 candle:
+MID high crosses 1.16490
+
+Result:
+BREAKOUT ABOVE
+</code></pre>
+<p>Once breakout events can be reliably detected against real D1 history and manually compared with TradingView, the breakout can then be connected to the generic trade engine.</p>
+<hr/>
+<hr/>
+<h2 id="what-matters-most-when-you-come-back-to-this">31. What Matters Most When You Come Back to This</h2>
+<p>There has been a lot of copy and paste, and that is fine at this stage.</p>
+<p>You do <strong>not</strong> need to be able to reconstruct every function from memory.</p>
+<p>The useful level of understanding is knowing what each building block is responsible for:</p>
+<ul>
+<li>D1 stores the historical market</li>
+<li>Candle Reader gets the requested history</li>
+<li>Backtest Runner moves time forwards</li>
+<li>Strategy Context controls what the strategy can see</li>
+<li>Strategy decides what it wants to do</li>
+<li>Execution models how the trade actually occurs</li>
+<li>Trade records capture the result</li>
+<li>Summary reduces trades into useful metrics</li>
+<li>Time utilities provide generic trading-time concepts</li>
+<li>ORB-specific files contain only ORB-specific behaviour</li>
+<li>Tests prove each piece before the next layer is added</li>
+</ul>
+<p>That mental model is enough to continue building the project intelligently, even if much of the implementation is still beyond what you would write unaided.</p>
+
+        </div>
+      </article>
+      <footer class="page-footer">Forex Backtester Project Wiki · Static HTML · Ready for GitHub and Cloudflare Pages</footer>
+    </main>
+
+    <aside class="toc" aria-label="On this page">
+      <div class="toc-inner">
+        <div class="toc-title">On this page</div>
+        <a class="toc-link h2" href="#the-bigger-product-goal">29. The Bigger Product Goal</a><a class="toc-link h2" href="#where-to-resume-next">30. Where to Resume Next</a><a class="toc-link h2" href="#what-matters-most-when-you-come-back-to-this">31. What Matters Most When You Come Back to This</a>
+      </div>
+    </aside>
+  </div>
+
+  <div class="scrim" id="scrim"></div>
+  <script src="assets/wiki.js"></script>
+</body>
+</html>

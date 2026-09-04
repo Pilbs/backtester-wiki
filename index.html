@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Forex Backtester project wiki - Home">
+  <title>Home · Forex Backtester Wiki</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body data-page="index.html">
+  <header class="topbar">
+    <button class="menu-button" id="menuButton" aria-label="Open navigation">☰</button>
+    <a class="brand" href="index.html"><span class="brand-mark">FB</span><span><strong>Forex Backtester</strong><small>Project Wiki</small></span></a>
+    <div class="topbar-meta"><span class="badge">Static documentation</span><span class="updated">Updated 4 Sep 2026</span></div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-search-wrap">
+        <label class="sr-only" for="navSearch">Filter navigation</label>
+        <input id="navSearch" class="sidebar-search" type="search" placeholder="Filter pages…" autocomplete="off">
+      </div>
+      <nav class="sidebar-nav" aria-label="Wiki navigation">
+        <div class="nav-group"><div class="nav-group-title">Overview</div><a class="nav-link active" href="index.html" data-search="home">Home</a></div><div class="nav-group"><div class="nav-group-title">Platform</div><a class="nav-link" href="data.html" data-search="market data">Market Data</a><a class="nav-link" href="engine.html" data-search="backtest engine">Backtest Engine</a><a class="nav-link" href="strategies.html" data-search="strategy development">Strategy Development</a><a class="nav-link" href="time.html" data-search="time &amp; sessions">Time &amp; Sessions</a></div><div class="nav-group"><div class="nav-group-title">Strategy Work</div><a class="nav-link" href="orb.html" data-search="orb foundation">ORB Foundation</a></div><div class="nav-group"><div class="nav-group-title">Project</div><a class="nav-link" href="architecture.html" data-search="architecture">Architecture</a><a class="nav-link" href="roadmap.html" data-search="roadmap">Roadmap</a></div>
+      </nav>
+      <div class="sidebar-footer">
+        <span>Generic platform first.</span>
+        <span>Strategies remain isolated.</span>
+      </div>
+    </aside>
+
+    <main class="content">
+      <div class="breadcrumbs"><a href="index.html">Wiki</a><span>›</span><span>Home</span></div>
+      <article class="article">
+        <div class="article-heading">
+          <p class="eyebrow">Forex Backtester</p>
+          <h1>Home</h1>
+        </div>
+        
+        <section class="status-grid" aria-label="Project status">
+          <div class="status-card"><span class="status-kicker">Data</span><strong>2.09M EUR/USD M1 candles</strong><span>OANDA BID / ASK / MID stored in Cloudflare D1</span></div>
+          <div class="status-card"><span class="status-kicker">Engine</span><strong>Deterministic backtesting</strong><span>Next-candle execution, SL/TP, trade records and summaries</span></div>
+          <div class="status-card"><span class="status-kicker">Time</span><strong>Timezone-aware sessions</strong><span>America/New_York support with automatic DST handling</span></div>
+          <div class="status-card"><span class="status-kicker">ORB</span><strong>Opening range foundation complete</strong><span>Range collection, freeze, daily reset and TradingView validation</span></div>
+        </section>
+        <div class="callout next-step"><strong>Next step</strong><span>Detect the first breakout above or below the completed daily opening range before wiring it to trade execution.</span></div>
+        
+        <div class="prose">
+          <h2 id="the-big-picture">1. The Big Picture</h2>
+<p>The project is now split into clear layers:</p>
+<pre><code class="language-text">market data
+    |
+    v
+generic backtest engine
+    |
+    v
+strategy interface
+    |
+    v
+individual strategies
+    |
+    v
+trade results / summaries
+</code></pre>
+<p>The longer-term goal is much bigger than ORB:</p>
+<blockquote>
+<p>Paste or import a Pine strategy -&gt; run it against years of data -&gt; batch test parameter combinations -&gt; compare the results.</p>
+</blockquote>
+<p>The work we are doing now is the engine underneath that future service.</p>
+<hr/>
+
+        </div>
+      </article>
+      <footer class="page-footer">Forex Backtester Project Wiki · Static HTML · Ready for GitHub and Cloudflare Pages</footer>
+    </main>
+
+    <aside class="toc" aria-label="On this page">
+      <div class="toc-inner">
+        <div class="toc-title">On this page</div>
+        <a class="toc-link h2" href="#the-big-picture">1. The Big Picture</a>
+      </div>
+    </aside>
+  </div>
+
+  <div class="scrim" id="scrim"></div>
+  <script src="assets/wiki.js"></script>
+</body>
+</html>

@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Forex Backtester project wiki - Backtest Engine">
+  <title>Backtest Engine · Forex Backtester Wiki</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body data-page="engine.html">
+  <header class="topbar">
+    <button class="menu-button" id="menuButton" aria-label="Open navigation">☰</button>
+    <a class="brand" href="index.html"><span class="brand-mark">FB</span><span><strong>Forex Backtester</strong><small>Project Wiki</small></span></a>
+    <div class="topbar-meta"><span class="badge">Static documentation</span><span class="updated">Updated 4 Sep 2026</span></div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-search-wrap">
+        <label class="sr-only" for="navSearch">Filter navigation</label>
+        <input id="navSearch" class="sidebar-search" type="search" placeholder="Filter pages…" autocomplete="off">
+      </div>
+      <nav class="sidebar-nav" aria-label="Wiki navigation">
+        <div class="nav-group"><div class="nav-group-title">Overview</div><a class="nav-link" href="index.html" data-search="home">Home</a></div><div class="nav-group"><div class="nav-group-title">Platform</div><a class="nav-link" href="data.html" data-search="market data">Market Data</a><a class="nav-link active" href="engine.html" data-search="backtest engine">Backtest Engine</a><a class="nav-link" href="strategies.html" data-search="strategy development">Strategy Development</a><a class="nav-link" href="time.html" data-search="time &amp; sessions">Time &amp; Sessions</a></div><div class="nav-group"><div class="nav-group-title">Strategy Work</div><a class="nav-link" href="orb.html" data-search="orb foundation">ORB Foundation</a></div><div class="nav-group"><div class="nav-group-title">Project</div><a class="nav-link" href="architecture.html" data-search="architecture">Architecture</a><a class="nav-link" href="roadmap.html" data-search="roadmap">Roadmap</a></div>
+      </nav>
+      <div class="sidebar-footer">
+        <span>Generic platform first.</span>
+        <span>Strategies remain isolated.</span>
+      </div>
+    </aside>
+
+    <main class="content">
+      <div class="breadcrumbs"><a href="index.html">Wiki</a><span>›</span><span>Backtest Engine</span></div>
+      <article class="article">
+        <div class="article-heading">
+          <p class="eyebrow">Forex Backtester</p>
+          <h1>Backtest Engine</h1>
+        </div>
+        
+        <div class="prose">
+          <h2 id="generic-backtest-runner">5. Generic Backtest Runner</h2>
+<p>File:</p>
+<pre><code class="language-text">src/backtest/backtest-runner.js
+</code></pre>
+<p>This is one of the central pieces of the project.</p>
+<p>Think of it as the machine that moves historical time forwards:</p>
+<pre><code class="language-text">candle 1 -&gt; strategy
+candle 2 -&gt; strategy
+candle 3 -&gt; strategy
+...
+</code></pre>
+<p>A strategy can respond with an instruction such as:</p>
+<pre><code class="language-javascript">{
+  action: "ENTER",
+  side: "LONG",
+  stopLossPips: 10,
+  takeProfitPips: 20
+}
+</code></pre>
+<p>The strategy says <strong>what it wants to do</strong>.</p>
+<p>The backtest engine decides <strong>how that instruction is executed</strong>.</p>
+<p>That separation is fundamental to making the engine reusable for many strategies.</p>
+<hr/>
+<hr/>
+<h2 id="avoiding-lookahead">6. Avoiding Lookahead</h2>
+<p>A major rule already built into the engine is:</p>
+<blockquote>
+<p>A strategy cannot see the future.</p>
+</blockquote>
+<p>If a signal is created from a candle that has just closed:</p>
+<pre><code class="language-text">13:09 candle closes
+        |
+        v
+strategy detects signal
+        |
+        v
+trade executes at 13:10 open
+</code></pre>
+<p>We do not allow the backtester to see the completed 13:09 candle and then pretend it entered at the 13:09 open.</p>
+<p>That would create unrealistic historical results.</p>
+<hr/>
+<hr/>
+<h2 id="strategy-context">7. Strategy Context</h2>
+<p>File:</p>
+<pre><code class="language-text">src/backtest/strategy-context.js
+</code></pre>
+<p>The strategy context controls what a strategy is allowed to see at each moment in historical time.</p>
+<p>It exposes things such as:</p>
+<pre><code class="language-javascript">candle
+index
+getCandle(...)
+getRecentCandles(...)
+</code></pre>
+<p>For example:</p>
+<pre><code class="language-javascript">getRecentCandles(3)
+</code></pre>
+<p>means:</p>
+<blockquote>
+<p>Give me the current candle and the previous two candles.</p>
+</blockquote>
+<p>A strategy cannot ask for a positive future offset such as:</p>
+<pre><code class="language-javascript">getCandle(+5)
+</code></pre>
+<p>because that would expose future market data.</p>
+<p>So the platform already contains basic protection against accidental lookahead bias.</p>
+<hr/>
+<hr/>
+<h2 id="strategy-interface">8. Strategy Interface</h2>
+<p>File:</p>
+<pre><code class="language-text">src/strategies/strategy-interface.js
+</code></pre>
+<p>This defines the basic contract between a strategy and the engine.</p>
+<p>Conceptually a strategy looks like:</p>
+<pre><code class="language-javascript">strategy = {
+  reset() {
+    // reset strategy state
+  },
+
+  onCandle(context) {
+    // inspect market data
+    // optionally return a signal
+  }
+}
+</code></pre>
+<p>The engine should not care whether the strategy is:</p>
+<ul>
+<li>ORB</li>
+<li>EMA crossover</li>
+<li>RSI</li>
+<li>Mean reversion</li>
+<li>London breakout</li>
+<li>AI-generated</li>
+<li>Eventually translated from Pine Script</li>
+</ul>
+<p>They should all communicate through the same generic strategy contract.</p>
+<hr/>
+<hr/>
+<h2 id="strategy-state-and-reset">9. Strategy State and Reset</h2>
+<p>Strategies are allowed to remember state, for example:</p>
+<pre><code class="language-text">Have I already entered today?
+What was yesterday's high?
+Has this pattern already fired?
+What is the current opening range?
+</code></pre>
+<p>Before a backtest starts, the runner can call:</p>
+<pre><code class="language-javascript">strategy.reset()
+</code></pre>
+<p>This prevents a second backtest from accidentally inheriting state from a previous run.</p>
+<p>We explicitly tested this behaviour.</p>
+<hr/>
+<hr/>
+<h2 id="trade-execution">10. Trade Execution</h2>
+<p>The current runner supports <strong>one open position at a time</strong>.</p>
+<p>When a strategy signals LONG, the engine waits until the next candle and enters using:</p>
+<pre><code class="language-text">ASK open
+</code></pre>
+<p>For SHORT:</p>
+<pre><code class="language-text">BID open
+</code></pre>
+<p>The runner then watches subsequent candles for stop-loss or take-profit conditions.</p>
+<hr/>
+<hr/>
+<h2 id="stop-loss-and-take-profit">11. Stop Loss and Take Profit</h2>
+<p>For a LONG position:</p>
+<pre><code class="language-text">SL checked against BID low
+TP checked against BID high
+</code></pre>
+<p>A long position closes by selling at the BID.</p>
+<p>For a SHORT position:</p>
+<pre><code class="language-text">SL checked against ASK high
+TP checked against ASK low
+</code></pre>
+<p>A short position closes by buying at the ASK.</p>
+<p>This gives the engine much more realistic execution behaviour than a single-price backtester.</p>
+<hr/>
+<hr/>
+<h2 id="the-m1-same-candle-limitation">12. The M1 Same-Candle Limitation</h2>
+<p>Suppose a single one-minute candle touches both:</p>
+<pre><code class="language-text">your stop loss
+and
+your take profit
+</code></pre>
+<p>OHLC data tells us that both prices occurred during that minute, but not which occurred first.</p>
+<p>Our current rule is deliberately conservative:</p>
+<blockquote>
+<p>If both SL and TP are touched in the same candle, STOP LOSS wins.</p>
+</blockquote>
+<p>This prevents the backtester from flattering a strategy when the sequence inside the candle is unknowable.</p>
+<p>Tick data could resolve this later, but M1 is appropriate for the platform at this stage.</p>
+<hr/>
+<hr/>
+<h2 id="trade-records">13. Trade Records</h2>
+<p>Each completed trade is recorded with information including:</p>
+<ul>
+<li>Side</li>
+<li>Entry time</li>
+<li>Entry price</li>
+<li>Stop loss</li>
+<li>Take profit</li>
+<li>Exit time</li>
+<li>Exit price</li>
+<li>Exit reason</li>
+<li>PnL in pips</li>
+<li>WIN / LOSS / BREAKEVEN</li>
+</ul>
+<p>So we do not just know that a strategy made or lost a number of pips. We have the underlying trades that produced the result.</p>
+<p>This will later support deeper analysis such as:</p>
+<ul>
+<li>Time of day</li>
+<li>Holding time</li>
+<li>MAE / MFE</li>
+<li>Drawdown</li>
+<li>Day of week</li>
+<li>Session</li>
+<li>Entry type</li>
+<li>Parameter combinations</li>
+</ul>
+<hr/>
+<hr/>
+<h2 id="backtest-summary">14. Backtest Summary</h2>
+<p>File:</p>
+<pre><code class="language-text">src/backtest/backtest-summary.js
+</code></pre>
+<p>It currently calculates basic metrics including:</p>
+<ul>
+<li>Total trades</li>
+<li>Wins</li>
+<li>Losses</li>
+<li>Breakevens</li>
+<li>Win rate</li>
+<li>Total PnL in pips</li>
+</ul>
+<p>Later this can grow into:</p>
+<ul>
+<li>Profit factor</li>
+<li>Expectancy</li>
+<li>Maximum drawdown</li>
+<li>Average winner</li>
+<li>Average loser</li>
+<li>Consecutive losses</li>
+<li>Monthly breakdown</li>
+<li>Risk-adjusted metrics</li>
+</ul>
+<p>But those are not needed yet.</p>
+<hr/>
+
+        </div>
+      </article>
+      <footer class="page-footer">Forex Backtester Project Wiki · Static HTML · Ready for GitHub and Cloudflare Pages</footer>
+    </main>
+
+    <aside class="toc" aria-label="On this page">
+      <div class="toc-inner">
+        <div class="toc-title">On this page</div>
+        <a class="toc-link h2" href="#generic-backtest-runner">5. Generic Backtest Runner</a><a class="toc-link h2" href="#avoiding-lookahead">6. Avoiding Lookahead</a><a class="toc-link h2" href="#strategy-context">7. Strategy Context</a><a class="toc-link h2" href="#strategy-interface">8. Strategy Interface</a><a class="toc-link h2" href="#strategy-state-and-reset">9. Strategy State and Reset</a><a class="toc-link h2" href="#trade-execution">10. Trade Execution</a><a class="toc-link h2" href="#stop-loss-and-take-profit">11. Stop Loss and Take Profit</a><a class="toc-link h2" href="#the-m1-same-candle-limitation">12. The M1 Same-Candle Limitation</a><a class="toc-link h2" href="#trade-records">13. Trade Records</a><a class="toc-link h2" href="#backtest-summary">14. Backtest Summary</a>
+      </div>
+    </aside>
+  </div>
+
+  <div class="scrim" id="scrim"></div>
+  <script src="assets/wiki.js"></script>
+</body>
+</html>
