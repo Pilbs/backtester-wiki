@@ -1,28 +1,78 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Forex Backtester project wiki - Strategy Development"><title>Strategy Development · Forex Backtester Wiki</title><link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="assets/styles.css"></head>
-<body data-page="strategies.html"><header class="topbar"><button class="menu-button" id="menuButton" aria-label="Open navigation">☰</button><a class="brand" href="index.html"><span class="brand-mark">FB</span><span><strong>Forex Backtester</strong><small>Project Wiki</small></span></a><div class="topbar-meta"><span class="badge">Static documentation</span><span class="updated">Updated 4 Sep 2026</span></div></header>
-<div class="layout"><aside class="sidebar" id="sidebar"><div class="sidebar-search-wrap"><label class="sr-only" for="navSearch">Filter navigation</label><input id="navSearch" class="sidebar-search" type="search" placeholder="Filter pages…" autocomplete="off"></div><nav class="sidebar-nav" aria-label="Wiki navigation"><div class="nav-group"><div class="nav-group-title">Overview</div><a class="nav-link" href="index.html" data-search="home status">Home</a></div><div class="nav-group"><div class="nav-group-title">Platform</div><a class="nav-link" href="data.html" data-search="market data d1 oanda">Market Data</a><a class="nav-link" href="engine.html" data-search="backtest engine execution">Backtest Engine</a><a class="nav-link active" href="strategies.html" data-search="strategy development trade intent">Strategy Development</a><a class="nav-link" href="time.html" data-search="time sessions timeframe">Time &amp; Sessions</a></div><div class="nav-group"><div class="nav-group-title">Strategy Work</div><a class="nav-link" href="orb.html" data-search="orb opening range breakout">ORB Strategy</a></div><div class="nav-group"><div class="nav-group-title">Project</div><a class="nav-link" href="architecture.html" data-search="architecture">Architecture</a><a class="nav-link" href="roadmap.html" data-search="roadmap research sweeps ai pine">Roadmap</a></div></nav><div class="sidebar-footer"><span>Generic platform first.</span><span>Strategies remain isolated.</span></div></aside>
+<body data-page="strategies.html"><header class="topbar"><button class="menu-button" id="menuButton" aria-label="Open navigation">☰</button><a class="brand" href="index.html"><span class="brand-mark">FB</span><span><strong>Forex Backtester</strong><small>Project Wiki</small></span></a><div class="topbar-meta"><span class="badge">Strategy contract</span><span class="updated">Updated 5 Sep 2026</span></div></header>
+<div class="layout"><aside class="sidebar" id="sidebar"><div class="sidebar-search-wrap"><label class="sr-only" for="navSearch">Filter navigation</label><input id="navSearch" class="sidebar-search" type="search" placeholder="Filter pages…" autocomplete="off"></div><nav class="sidebar-nav" aria-label="Wiki navigation"><div class="nav-group"><div class="nav-group-title">Overview</div><a class="nav-link" href="index.html" data-search="home status product focus">Home</a></div><div class="nav-group"><div class="nav-group-title">Platform</div><a class="nav-link" href="data.html" data-search="market data d1 oanda">Market Data</a><a class="nav-link" href="engine.html" data-search="backtest engine account execution">Backtest Engine</a><a class="nav-link active" href="strategies.html" data-search="strategy development definition indicators">Strategy Development</a><a class="nav-link" href="research.html" data-search="research experiments config parameters sweep">Research &amp; Experiments</a><a class="nav-link" href="time.html" data-search="time sessions timeframe">Time &amp; Sessions</a></div><div class="nav-group"><div class="nav-group-title">Strategy Work</div><a class="nav-link" href="orb.html" data-search="orb opening range breakout acceptance">ORB Strategy</a></div><div class="nav-group"><div class="nav-group-title">Project</div><a class="nav-link" href="architecture.html" data-search="architecture mental model">Architecture</a><a class="nav-link" href="roadmap.html" data-search="roadmap next milestone web ui pine ai">Roadmap</a></div></nav><div class="sidebar-footer"><span>Primary benefit: test strategies.</span><span>Research first, not charting.</span></div></aside>
 <main class="content"><div class="breadcrumbs"><a href="index.html">Wiki</a><span>›</span><span>Strategy Development</span></div><article class="article"><div class="article-heading"><p class="eyebrow">Forex Backtester</p><h1>Strategy Development</h1></div><div class="prose">
-<h2 id="strategy-contract">Strategy Contract</h2><p>A strategy is an object with an <code>onCandle(context)</code> function and an optional <code>reset()</code>. The engine validates this interface before a run.</p><pre><code class="language-javascript">{
-  name: "ORB",
-  reset() { ... },
-  onCandle(context) { ... }
+<h2 id="two-pieces">A Strategy Has Two Pieces</h2><p>This is the key concept for understanding why different strategies can still use one generic research platform.</p><h3>1. Runtime strategy</h3><p>The runtime contains the actual trading rules and state:</p><pre><code class="language-javascript">{
+    name: "My Strategy",
+    reset() { ... },
+    onCandle(context) { ... }
 }
-</code></pre><p>The strategy decides what it wants to do; the engine handles execution.</p>
-<h2 id="strategy-context">Strategy Context</h2><p>The context exposes the current completed strategy candle, historical access helpers, instrument and timeframe. Future candle access is blocked.</p><pre><code class="language-javascript">context.candle
+</code></pre><h3>2. Strategy definition</h3><p>The definition describes the parameter catalogue that a human, runner or future UI is allowed to configure:</p><pre><code class="language-javascript">{
+    id: "ema-cross",
+    name: "EMA Cross",
+    version: 1,
+    createStrategy,
+    parameters: {
+        fastLength: { type: "integer", default: 20, min: 1 },
+        slowLength: { type: "integer", default: 50, min: 2 }
+    }
+}
+</code></pre><p>Parameter types currently supported are <code>number</code>, <code>integer</code>, <code>string</code> and <code>boolean</code>. Definitions can also specify defaults, required fields, min/max, options and <code>sweepable: false</code>.</p>
+<h2 id="why-definition">Why the Definition Matters</h2><p>ORB and an EMA/ATR strategy do not need the same fields. That is fine. The generic experiment only selects a strategy ID; the chosen definition tells the platform what parameters exist and validates them.</p><pre><code class="language-text">research config
+   strategy: "orb"
+         |
+         v
+ORB definition
+         |
+         +--> valid fields
+         +--> defaults
+         +--> min/max/options
+         +--> creates ORB runtime
+</code></pre><p>Later, the web UI can use exactly the same definition to generate strategy-specific form controls dynamically.</p>
+<h2 id="context">What the Strategy Can See</h2><pre><code class="language-text">context.candle
+context.index
 context.instrument
 context.timeframe
-context.getCandle(-1)
-context.getRecentCandles(20)
-</code></pre>
-<h2 id="trade-intent-contract">Trade Intent Contract</h2><p><code>src/strategies/trade-intent.js</code> validates executable instructions returned by strategies.</p><pre><code class="language-javascript">{
-  action: "ENTER",
-  side: "SHORT",
-  stopLoss: { type: "PRICE", value: 1.08425 },
-  takeProfit: { type: "PIPS", value: 20 }
-}
-</code></pre><p>Today the engine supports <code>ENTER</code>, LONG/SHORT, and PIPS/PRICE protection levels. Future actions such as EXIT or MOVE_STOP should only be added when the engine genuinely supports them.</p>
-<h2 id="separation">Keep Strategy Logic Strategy-Side</h2><p>Indicators and decision logic belong in the strategy. For example, an ATR strategy should calculate ATR itself and emit a concrete PIPS or PRICE level. The execution engine should not need to understand ATR.</p>
-<h2 id="current-tests">Current Regression Tests</h2><p>The project now keeps a smaller set of tests focused on current behaviour: candle reading, strategy context, session/timezone behaviour, opening-range construction, execution-timeframe semantics and the real ORB regression run.</p><p>The old proof-of-concept test strategies were development scaffolding; the project direction is now real strategies plus focused deterministic engine tests.</p>
-<h2 id="next-strategy-step">Next Strategy Step</h2><p>The next seam to formalise is strategy configuration. Parameter values should become plain data so the same strategy implementation can be instantiated repeatedly with different settings. That is the prerequisite for parameter sweeps.</p>
-</div></article><footer class="page-footer">Forex Backtester Project Wiki · Static HTML · GitHub + Cloudflare Pages</footer></main><aside class="toc" aria-label="On this page"><div class="toc-inner"><div class="toc-title">On this page</div><a class="toc-link h2" href="#strategy-contract">Strategy Contract</a><a class="toc-link h2" href="#strategy-context">Strategy Context</a><a class="toc-link h2" href="#trade-intent-contract">Trade Intent Contract</a><a class="toc-link h2" href="#separation">Keep Strategy Logic Strategy-Side</a><a class="toc-link h2" href="#current-tests">Current Regression Tests</a><a class="toc-link h2" href="#next-strategy-step">Next Strategy Step</a></div></aside></div><div class="scrim" id="scrim"></div><script src="assets/wiki.js"></script></body></html>
+context.account
+context.position
+context.openTrades
+context.pendingOrders
+context.getCandle(offset)
+context.getRecentCandles(count)
+</code></pre><p>The current strategy candle is complete before the strategy sees it. Future-candle access is blocked. MID prices are normally used for chart-style signal calculations.</p>
+<h2 id="instructions">What the Strategy Can Ask the Engine To Do</h2><p>A strategy returns <code>null</code>, one instruction, or an array of instructions.</p><pre><code class="language-text">Actions:
+ENTER
+EXIT
+UPDATE_STOP
+UPDATE_TARGET
+CANCEL_ORDER
+
+Order types:
+MARKET
+LIMIT
+STOP
+STOP_LIMIT
+
+Time in force:
+GTC
+DAY
+IOC
+FOK
+</code></pre><p>Entry sizing can be UNITS, CASH, PERCENT_EQUITY or RISK_PERCENT. Stops/targets can be expressed as PIPS, PRICE or PERCENT. Exits can target ALL, TRADE_ID, ENTRY_ID or SIDE, and partial exits can use UNITS or PERCENT_POSITION.</p>
+<h2 id="indicators">Common Indicator Toolkit</h2><p>Reusable indicators live under <code>src/indicators/</code>. Current helpers include SMA, EMA, RMA/Wilder, ATR, RSI, rolling highest/lowest, rolling standard deviation, true range, crossover/crossunder and confirmed pivots.</p><p>Stateful indicators expose:</p><pre><code class="language-javascript">indicator.next(value)
+indicator.reset()
+indicator.value
+</code></pre><p>Strategy-specific calculations remain strategy-side. The engine should receive executable instructions, not concepts such as "ATR stop".</p>
+<h2 id="new-strategy">How to Add a New Strategy Today</h2><ol><li>Create <code>src/strategies/my-strategy/my-strategy.js</code>.</li><li>Create <code>my-strategy-definition.js</code> describing every configurable/sweepable parameter.</li><li>Use common indicator/time helpers where they fit.</li><li>Reset all strategy/indicator state in <code>reset()</code>.</li><li>Return generic trade intents from <code>onCandle()</code>.</li><li>Add a deterministic strategy test.</li><li>Run <code>npm test</code>.</li><li>Run a small real-data smoke test before a large sweep.</li></ol><p>For a TradingView strategy today, this is a manual Pine-to-JavaScript port. That is acceptable for the current personal tool; automated Pine ingestion is a later milestone.</p>
+<h2 id="not-strategy">What Does Not Belong in Strategy Code</h2><pre><code class="language-text">D1 queries
+historical data loading
+broker/API calls
+fill simulation
+spread/slippage calculations
+commission/account calculations
+margin calculations
+experiment loops
+result persistence
+</code></pre><p>Those are generic platform responsibilities.</p>
+</div></article><footer class="page-footer">Forex Backtester Project Wiki · GitHub + Cloudflare Pages</footer></main><aside class="toc"><div class="toc-inner"><div class="toc-title">On this page</div><a class="toc-link h2" href="#two-pieces">Two Pieces</a><a class="toc-link h2" href="#why-definition">Why Definition</a><a class="toc-link h2" href="#context">Context</a><a class="toc-link h2" href="#instructions">Instructions</a><a class="toc-link h2" href="#indicators">Indicators</a><a class="toc-link h2" href="#new-strategy">Add Strategy</a><a class="toc-link h2" href="#not-strategy">Boundaries</a></div></aside></div><div class="scrim" id="scrim"></div><script src="assets/wiki.js"></script></body></html>

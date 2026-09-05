@@ -1,33 +1,36 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Forex Backtester project wiki - Backtest Engine"><title>Backtest Engine · Forex Backtester Wiki</title><link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="assets/styles.css"></head>
-<body data-page="engine.html"><header class="topbar"><button class="menu-button" id="menuButton" aria-label="Open navigation">☰</button><a class="brand" href="index.html"><span class="brand-mark">FB</span><span><strong>Forex Backtester</strong><small>Project Wiki</small></span></a><div class="topbar-meta"><span class="badge">Static documentation</span><span class="updated">Updated 4 Sep 2026</span></div></header>
-<div class="layout"><aside class="sidebar" id="sidebar"><div class="sidebar-search-wrap"><label class="sr-only" for="navSearch">Filter navigation</label><input id="navSearch" class="sidebar-search" type="search" placeholder="Filter pages…" autocomplete="off"></div><nav class="sidebar-nav" aria-label="Wiki navigation"><div class="nav-group"><div class="nav-group-title">Overview</div><a class="nav-link" href="index.html" data-search="home status">Home</a></div><div class="nav-group"><div class="nav-group-title">Platform</div><a class="nav-link" href="data.html" data-search="market data d1 oanda">Market Data</a><a class="nav-link active" href="engine.html" data-search="backtest engine execution">Backtest Engine</a><a class="nav-link" href="strategies.html" data-search="strategy development trade intent">Strategy Development</a><a class="nav-link" href="time.html" data-search="time sessions timeframe">Time &amp; Sessions</a></div><div class="nav-group"><div class="nav-group-title">Strategy Work</div><a class="nav-link" href="orb.html" data-search="orb opening range breakout">ORB Strategy</a></div><div class="nav-group"><div class="nav-group-title">Project</div><a class="nav-link" href="architecture.html" data-search="architecture">Architecture</a><a class="nav-link" href="roadmap.html" data-search="roadmap research sweeps ai pine">Roadmap</a></div></nav><div class="sidebar-footer"><span>Generic platform first.</span><span>Strategies remain isolated.</span></div></aside>
+<body data-page="engine.html"><header class="topbar"><button class="menu-button" id="menuButton" aria-label="Open navigation">☰</button><a class="brand" href="index.html"><span class="brand-mark">FB</span><span><strong>Forex Backtester</strong><small>Project Wiki</small></span></a><div class="topbar-meta"><span class="badge">Human Backtesting V1</span><span class="updated">Updated 5 Sep 2026</span></div></header>
+<div class="layout"><aside class="sidebar" id="sidebar"><div class="sidebar-search-wrap"><label class="sr-only" for="navSearch">Filter navigation</label><input id="navSearch" class="sidebar-search" type="search" placeholder="Filter pages…" autocomplete="off"></div><nav class="sidebar-nav" aria-label="Wiki navigation"><div class="nav-group"><div class="nav-group-title">Overview</div><a class="nav-link" href="index.html" data-search="home status product focus">Home</a></div><div class="nav-group"><div class="nav-group-title">Platform</div><a class="nav-link" href="data.html" data-search="market data d1 oanda">Market Data</a><a class="nav-link active" href="engine.html" data-search="backtest engine account execution">Backtest Engine</a><a class="nav-link" href="strategies.html" data-search="strategy development definition indicators">Strategy Development</a><a class="nav-link" href="research.html" data-search="research experiments config parameters sweep">Research &amp; Experiments</a><a class="nav-link" href="time.html" data-search="time sessions timeframe">Time &amp; Sessions</a></div><div class="nav-group"><div class="nav-group-title">Strategy Work</div><a class="nav-link" href="orb.html" data-search="orb opening range breakout acceptance">ORB Strategy</a></div><div class="nav-group"><div class="nav-group-title">Project</div><a class="nav-link" href="architecture.html" data-search="architecture mental model">Architecture</a><a class="nav-link" href="roadmap.html" data-search="roadmap next milestone web ui pine ai">Roadmap</a></div></nav><div class="sidebar-footer"><span>Primary benefit: test strategies.</span><span>Research first, not charting.</span></div></aside>
 <main class="content"><div class="breadcrumbs"><a href="index.html">Wiki</a><span>›</span><span>Backtest Engine</span></div><article class="article"><div class="article-heading"><p class="eyebrow">Forex Backtester</p><h1>Backtest Engine</h1></div><div class="prose">
-<h2 id="service-layer">Backtest Service</h2><p><code>src/backtest/backtest-service.js</code> is the main application-level entry point. A backtest job supplies instrument, strategy timeframe, execution timeframe, date range and a strategy instance.</p><pre><code class="language-javascript">runBacktestJob({
-  instrument: "EUR_USD",
-  strategyTimeframe: "M5",
-  executionTimeframe: "M1",
-  from,
-  to,
-  strategy
-})
-</code></pre><p>The service loads the two candle series, resolves instrument metadata such as pip size, runs the engine and returns configuration, data counts, signals, trades and summary metrics.</p>
-<h2 id="two-timeframes">Strategy vs Execution Timeframe</h2><p>The engine now separates the timeframe used to make decisions from the timeframe used to simulate fills and SL/TP.</p><pre><code class="language-text">M5 strategy candle 09:15 -> closes 09:20
-                         |
-                         v
-                 signal becomes known
-                         |
-                         v
-                first eligible M1 open
-</code></pre><p>This avoids lookahead while allowing lower-timeframe execution to resolve intrabar outcomes more accurately.</p>
-<h2 id="causal-timing">Causal Timing</h2><p>A strategy only sees completed strategy candles. The current fixed-timeframe engine determines candle completion from the timeframe duration, then processes the signal before the eligible execution candle opens.</p><p>The deterministic execution test proves why this matters: a coarse M5 execution candle can contain both stop and target, while the M1 sequence can reveal which happened first.</p>
-<h2 id="trade-intents">Trade Intents</h2><p>Strategies communicate through a generic executable contract rather than ORB-specific fields.</p><pre><code class="language-javascript">{
-  action: "ENTER",
-  side: "LONG",
-  stopLoss: { type: "PIPS", value: 10 },
-  takeProfit: { type: "PIPS", value: 20 }
-}
-</code></pre><p><code>PRICE</code> levels are also supported. Indicator-specific concepts such as ATR stay inside strategy logic; the engine only receives an executable level.</p>
-<h2 id="execution-model">Execution Model</h2><ul><li>LONG entry: ASK open</li><li>SHORT entry: BID open</li><li>LONG stop/target checks: BID low/high</li><li>SHORT stop/target checks: ASK high/low</li><li>One open position at a time</li><li>If SL and TP occur in the same execution candle, stop loss wins conservatively</li></ul>
-<h2 id="results">Results</h2><p>Completed trades record side, signal/decision time, entry, stop, target, exit, exit reason, PnL in pips and WIN / LOSS / BREAKEVEN. The summary currently reports trade counts, win rate and total PnL in pips.</p>
-</div></article><footer class="page-footer">Forex Backtester Project Wiki · Static HTML · GitHub + Cloudflare Pages</footer></main><aside class="toc" aria-label="On this page"><div class="toc-inner"><div class="toc-title">On this page</div><a class="toc-link h2" href="#service-layer">Backtest Service</a><a class="toc-link h2" href="#two-timeframes">Strategy vs Execution Timeframe</a><a class="toc-link h2" href="#causal-timing">Causal Timing</a><a class="toc-link h2" href="#trade-intents">Trade Intents</a><a class="toc-link h2" href="#execution-model">Execution Model</a><a class="toc-link h2" href="#results">Results</a></div></aside></div><div class="scrim" id="scrim"></div><script src="assets/wiki.js"></script></body></html>
+<h2 id="purpose">What the Engine Does</h2><p>The engine takes completed strategy candles, execution candles, a strategy, account assumptions and execution assumptions, then deterministically simulates orders, fills, trades and account state.</p><pre><code class="language-text">strategy decisions
+      |
+      v
+trade intents
+      |
+      v
+orders -> fills -> trades
+      |
+      v
+account / margin / risk
+      |
+      v
+structured backtest result
+</code></pre>
+<h2 id="account">Account Model</h2><p>The account layer tracks starting capital, balance, equity, realised/unrealised P&amp;L, leverage, margin used/free, peak equity and drawdown. It can enforce max open trades, trades per side, position units, gross exposure, margin usage, drawdown and daily-loss limits.</p><p>Position modes are <code>HEDGING</code> and <code>NETTING</code>.</p>
+<h2 id="sizing">Position Sizing</h2><pre><code class="language-text">UNITS            fixed units
+CASH             fixed notional cash amount
+PERCENT_EQUITY   notional position as % of equity
+RISK_PERCENT     units derived from equity risk + stop distance
+</code></pre><p><code>RISK_PERCENT</code> requires a stop. For example, value <code>1</code> means size the trade so a stop-out is approximately 1% of current equity.</p>
+<h2 id="orders">Orders and Lifecycle</h2><pre><code class="language-text">Order types: MARKET | LIMIT | STOP | STOP_LIMIT
+Time in force: GTC | DAY | IOC | FOK
+Actions: ENTER | EXIT | UPDATE_STOP | UPDATE_TARGET | CANCEL_ORDER
+</code></pre><p>The engine supports multiple simultaneous trades, partial exits, strategy-controlled exits, dynamic stop/target changes and pending-order cancellation/expiry.</p>
+<h2 id="prices">Price and Execution Model</h2><p>Strategies normally calculate on MID. Execution uses the correct spread side:</p><pre><code class="language-text">LONG  enter ASK, exit BID
+SHORT enter BID, exit ASK
+</code></pre><p>Slippage and commission are configurable. Commission models include none, pips per side, fixed per order and percent notional.</p>
+<h2 id="causal">Deterministic OHLC Rules</h2><p>OHLC bars do not reveal the exact order of every intrabar event. The engine therefore uses explicit reproducible rules rather than pretending tick detail exists.</p><ul><li>A strategy sees a candle only after that candle closes.</li><li>If stop and target are both touched in one execution candle, <code>STOP_FIRST</code> or <code>TARGET_FIRST</code> determines the assumption.</li><li>An intrabar entry cannot retrospectively use the whole entry candle for protection or MFE/MAE.</li><li>An intrabar protective exit cannot include later movement in that candle in MFE/MAE.</li><li>Stop-limit activation is conservative: activation and a later limit fill are not invented from unknowable same-bar ordering.</li></ul>
+<h2 id="diagnostics">Results and Diagnostics</h2><p>Completed trades carry P&amp;L, exit reason, holding time, causal/conservative MFE and MAE, and whether the trade was ever profitable. Summaries include trade counts, win rate, pips/account P&amp;L, profit factor, expectancy, drawdown, year/month breakdowns and rejection/risk counts.</p>
+<h2 id="limitations">Deliberate V1 Limits</h2><p>The engine does not claim tick/order-book precision, dynamic historical account-currency conversion or synchronized multi-instrument execution. Those are explicit scope boundaries, not hidden assumptions.</p>
+</div></article><footer class="page-footer">Forex Backtester Project Wiki · GitHub + Cloudflare Pages</footer></main><aside class="toc"><div class="toc-inner"><div class="toc-title">On this page</div><a class="toc-link h2" href="#purpose">Purpose</a><a class="toc-link h2" href="#account">Account</a><a class="toc-link h2" href="#sizing">Sizing</a><a class="toc-link h2" href="#orders">Orders</a><a class="toc-link h2" href="#prices">Prices</a><a class="toc-link h2" href="#causal">OHLC Rules</a><a class="toc-link h2" href="#diagnostics">Results</a><a class="toc-link h2" href="#limitations">Limits</a></div></aside></div><div class="scrim" id="scrim"></div><script src="assets/wiki.js"></script></body></html>

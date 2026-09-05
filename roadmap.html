@@ -1,44 +1,35 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Forex Backtester project wiki - Roadmap"><title>Roadmap · Forex Backtester Wiki</title><link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="assets/styles.css"></head>
-<body data-page="roadmap.html"><header class="topbar"><button class="menu-button" id="menuButton" aria-label="Open navigation">☰</button><a class="brand" href="index.html"><span class="brand-mark">FB</span><span><strong>Forex Backtester</strong><small>Project Wiki</small></span></a><div class="topbar-meta"><span class="badge">Static documentation</span><span class="updated">Updated 4 Sep 2026</span></div></header>
-<div class="layout"><aside class="sidebar" id="sidebar"><div class="sidebar-search-wrap"><label class="sr-only" for="navSearch">Filter navigation</label><input id="navSearch" class="sidebar-search" type="search" placeholder="Filter pages…" autocomplete="off"></div><nav class="sidebar-nav" aria-label="Wiki navigation"><div class="nav-group"><div class="nav-group-title">Overview</div><a class="nav-link" href="index.html" data-search="home status">Home</a></div><div class="nav-group"><div class="nav-group-title">Platform</div><a class="nav-link" href="data.html" data-search="market data d1 oanda">Market Data</a><a class="nav-link" href="engine.html" data-search="backtest engine execution">Backtest Engine</a><a class="nav-link" href="strategies.html" data-search="strategy development trade intent">Strategy Development</a><a class="nav-link" href="time.html" data-search="time sessions timeframe">Time &amp; Sessions</a></div><div class="nav-group"><div class="nav-group-title">Strategy Work</div><a class="nav-link" href="orb.html" data-search="orb opening range breakout">ORB Strategy</a></div><div class="nav-group"><div class="nav-group-title">Project</div><a class="nav-link" href="architecture.html" data-search="architecture">Architecture</a><a class="nav-link active" href="roadmap.html" data-search="roadmap research sweeps ai pine">Roadmap</a></div></nav><div class="sidebar-footer"><span>Generic platform first.</span><span>Strategies remain isolated.</span></div></aside>
+<body data-page="roadmap.html"><header class="topbar"><button class="menu-button" id="menuButton" aria-label="Open navigation">☰</button><a class="brand" href="index.html"><span class="brand-mark">FB</span><span><strong>Forex Backtester</strong><small>Project Wiki</small></span></a><div class="topbar-meta"><span class="badge">Roadmap</span><span class="updated">Updated 5 Sep 2026</span></div></header>
+<div class="layout"><aside class="sidebar" id="sidebar"><div class="sidebar-search-wrap"><label class="sr-only" for="navSearch">Filter navigation</label><input id="navSearch" class="sidebar-search" type="search" placeholder="Filter pages…" autocomplete="off"></div><nav class="sidebar-nav" aria-label="Wiki navigation"><div class="nav-group"><div class="nav-group-title">Overview</div><a class="nav-link" href="index.html" data-search="home status product focus">Home</a></div><div class="nav-group"><div class="nav-group-title">Platform</div><a class="nav-link" href="data.html" data-search="market data d1 oanda">Market Data</a><a class="nav-link" href="engine.html" data-search="backtest engine account execution">Backtest Engine</a><a class="nav-link" href="strategies.html" data-search="strategy development definition indicators">Strategy Development</a><a class="nav-link" href="research.html" data-search="research experiments config parameters sweep">Research &amp; Experiments</a><a class="nav-link" href="time.html" data-search="time sessions timeframe">Time &amp; Sessions</a></div><div class="nav-group"><div class="nav-group-title">Strategy Work</div><a class="nav-link" href="orb.html" data-search="orb opening range breakout acceptance">ORB Strategy</a></div><div class="nav-group"><div class="nav-group-title">Project</div><a class="nav-link" href="architecture.html" data-search="architecture mental model">Architecture</a><a class="nav-link active" href="roadmap.html" data-search="roadmap next milestone web ui pine ai">Roadmap</a></div></nav><div class="sidebar-footer"><span>Primary benefit: test strategies.</span><span>Research first, not charting.</span></div></aside>
 <main class="content"><div class="breadcrumbs"><a href="index.html">Wiki</a><span>›</span><span>Roadmap</span></div><article class="article"><div class="article-heading"><p class="eyebrow">Forex Backtester</p><h1>Roadmap</h1></div><div class="prose">
-<h2 id="milestone">Milestone Reached: Deterministic Engine</h2><p>The first platform milestone is complete: historical data, generic strategy execution, bid/ask-aware fills, timezone-aware sessions, separate strategy/execution timeframes, trade intents, summaries and a real ORB regression case are all in place.</p>
-<h2 id="next">Next: Strategy Configuration</h2><p>The next change should stay small. Move strategy parameter values into a plain configuration object without adding sweeps yet.</p><pre><code class="language-javascript">{
-  strategy: "ORB",
-  parameters: {
-    startHour: 8,
-    startMinute: 15,
-    durationMinutes: 60,
-    stopLossPips: 10,
-    takeProfitPips: 20
-  }
-}
-</code></pre><p>This separates strategy implementation from run-specific parameter values.</p>
-<h2 id="sweeps">Then: Parameter Sweeps</h2><p>Once configuration is structured, the research layer can generate combinations and call the existing backtest service repeatedly.</p><pre><code class="language-text">SL:       5, 10, 15, 20
-TP:       10, 20, 30, 40
-Duration: 30, 45, 60, 75
-
--> generate combinations
--> run deterministic backtests
--> rank and compare results
-</code></pre>
-<h2 id="experiments">Experiments and Persistence</h2><p>After basic sweeps, results should become first-class experiment data: run configuration, summary metrics and trade records. This will make comparisons repeatable and provide a clean interface for future automation.</p>
-<h2 id="ai">AI Research Agent</h2><p>The AI should control deterministic quantitative tools rather than calculate PnL itself. Future tools may include:</p><pre><code class="language-text">get_data_catalog()
-run_backtest()
-run_parameter_sweep()
-compare_runs()
-get_backtest_trades()
-</code></pre><p>The loop becomes hypothesis -> backtest -> inspect -> refine -> robustness checks.</p>
-<h2 id="pine">Pine Comes Later</h2><p>Pine parsing is intentionally not the next problem. The eventual direction remains:</p><pre><code class="language-text">Pine Script
-   |
-   v
-parser / compiler
-   |
-   v
-internal strategy representation
-   |
-   v
-existing backtest + research platform
-</code></pre><p>Building the research platform first means Pine has a stable target to compile into later.</p>
-</div></article><footer class="page-footer">Forex Backtester Project Wiki · Static HTML · GitHub + Cloudflare Pages</footer></main><aside class="toc" aria-label="On this page"><div class="toc-inner"><div class="toc-title">On this page</div><a class="toc-link h2" href="#milestone">Deterministic Engine</a><a class="toc-link h2" href="#next">Strategy Configuration</a><a class="toc-link h2" href="#sweeps">Parameter Sweeps</a><a class="toc-link h2" href="#experiments">Experiments</a><a class="toc-link h2" href="#ai">AI Research Agent</a><a class="toc-link h2" href="#pine">Pine Comes Later</a></div></aside></div><div class="scrim" id="scrim"></div><script src="assets/wiki.js"></script></body></html>
+<h2 id="north-star">North Star</h2><blockquote><p>Take an existing automated strategy, test it over deeper historical data, sweep the important parameters, and understand whether the result is robust.</p></blockquote><p>The roadmap should be judged against that sentence. Features that do not help strategy research should not distract the project.</p>
+<h2 id="done-data">Done — Historical Data Foundation</h2><ul><li>OANDA candles stored in Cloudflare D1.</li><li>BID / ASK / MID OHLC.</li><li>Native EUR/USD M1 and M5 proven end-to-end.</li><li>Reusable data reader and import pipeline.</li></ul>
+<h2 id="done-human">Done — Human Backtesting V1</h2><ul><li>Realistic multi-trade account/execution engine.</li><li>Strategy definitions and validated configuration.</li><li>Common indicator toolkit.</li><li>Generic parameter grids and run limits.</li><li>Dataset loaded once per experiment.</li><li>Structured schema-v5 experiment JSON.</li><li>Year/month summaries, drawdown and causal MFE/MAE diagnostics.</li><li>Real six-run ORB acceptance experiment passed.</li></ul><p>This milestone is closed. Do not keep adding speculative engine features unless a real strategy exposes a generic missing capability.</p>
+<h2 id="next">Next — Research Platform V1</h2><p>The purpose of this milestone is simple: <strong>make the engine easy for a human to use.</strong></p>
+<h3 id="phase1">Phase 1 — Generic Research Config</h3><p>Create one obvious <code>research.config.js</code> containing universal market/account/execution settings plus the selected strategy's own config and parameter grid.</p><p>The user should not have to edit <code>orb-sweep.js</code> or know the application plumbing.</p>
+<h3 id="phase2">Phase 2 — Strategy Registry + Discoverability</h3><p>Add a central strategy registry so <code>strategy: "orb"</code> resolves to the correct definition. Expose common account/execution choices as metadata so the available options are discoverable rather than hidden in validators.</p>
+<h3 id="phase3">Phase 3 — Generic Runner</h3><p>Add one command:</p><pre><code class="language-text">npm run research
+</code></pre><p>It should validate the config, show the requested combination count, run the experiment, print progress/results and write JSON.</p><p>Acceptance test: reproduce the current ORB smoke experiment from the generic config without touching ORB-specific experiment code.</p>
+<h3 id="phase4">Phase 4 — Minimal Human Web UI</h3><p>Build a research UI, not a visual strategy builder. The browser should let the user choose strategy, market, dates, account assumptions and parameter values, preview the run count, launch research and inspect ranked results.</p><p>Strategy-specific fields should be generated from the chosen strategy definition rather than hard-coded into the UI.</p>
+<h3 id="phase5">Phase 5 — Job/Persistence Boundary</h3><p>Add asynchronous job handling and saved experiment metadata only as required by the real browser workflow. Long experiments should not rely on one HTTP request staying open.</p>
+<h2 id="pine">Later — Pine Ingestion V1</h2><pre><code class="language-text">TradingView Pine strategy
+        |
+        v
+supported parser / translator
+        |
+        v
+internal strategy runtime + definition
+        |
+        v
+same research platform
+</code></pre><p>Pine parsing removes ingestion friction; it is not the product itself. Start with a supported subset rather than promising arbitrary Pine compatibility.</p>
+<h2 id="ai">Later — AI Researcher V1</h2><p>The AI should orchestrate deterministic platform tools such as:</p><pre><code class="language-text">plan_experiment
+run_experiment
+compare_runs
+inspect_trades
+analyse_periods
+</code></pre><p>The agent forms hypotheses and requests experiments; the backtester remains responsible for deterministic calculations.</p>
+<h2 id="productisation">Later — Productisation</h2><p>Auth, plans, billing, broader instrument coverage and scale come after the human research workflow proves useful. A curated set of deep, clean instruments is acceptable; the product does not need TradingView's market catalogue.</p>
+<h2 id="next-actions">Next Session — Concrete Actions</h2><ol><li>Start a new milestone/branch for Research Platform V1.</li><li>Agree the exact shape of <code>research.config.js</code>.</li><li>Add a strategy registry.</li><li>Centralise discoverable universal config metadata.</li><li>Build <code>npm run research</code>.</li><li>Reproduce the accepted ORB smoke run through that generic path.</li><li>Only then sketch the minimal browser UI over the same model.</li></ol>
+</div></article><footer class="page-footer">Forex Backtester Project Wiki · GitHub + Cloudflare Pages</footer></main><aside class="toc"><div class="toc-inner"><div class="toc-title">On this page</div><a class="toc-link h2" href="#north-star">North Star</a><a class="toc-link h2" href="#done-data">Data Done</a><a class="toc-link h2" href="#done-human">Human V1 Done</a><a class="toc-link h2" href="#next">Research Platform V1</a><a class="toc-link h2" href="#pine">Pine</a><a class="toc-link h2" href="#ai">AI</a><a class="toc-link h2" href="#productisation">Productisation</a><a class="toc-link h2" href="#next-actions">Next Actions</a></div></aside></div><div class="scrim" id="scrim"></div><script src="assets/wiki.js"></script></body></html>

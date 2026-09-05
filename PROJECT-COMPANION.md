@@ -1,372 +1,478 @@
 # Forex Backtester — Project Companion
 
-Updated 4 September 2026.
+Updated 5 September 2026.
 
-## Purpose
+## What this project is
 
-The project is evolving from a personal backtester into a generic strategy research platform. The long-term direction is:
+The project is a **strategy research tool**, not a charting platform or strategy designer.
 
-```text
-strategy idea / Pine Script
-        |
-        v
-structured strategy
-        |
-        v
-deterministic backtest engine
-        |
-        v
-parameter sweeps / experiments
-        |
-        v
-comparison and research tools
-        |
-        v
-AI-assisted strategy research
-```
+The core goal is:
 
-ORB is the first real strategy and regression case, not the product architecture.
+> Take an existing automated trading strategy, test it over more historical data than is convenient in TradingView, sweep its important parameters, and understand whether the apparent edge is robust.
 
-## Current milestone
+The product should make strategy testing easier, not become another place to visually design strategies.
 
-Phase 1 — the deterministic backtesting foundation — is complete.
-
-The engine now has:
-
-- OANDA historical data in Cloudflare D1
-- native EUR/USD M1 and M5 candles
-- BID / ASK / MID OHLC storage
-- generic per-instrument D1 selection
-- resumable historical imports
-- instrument pip metadata
-- generic candle reading
-- strategy context with future-candle protection
-- timezone-aware session utilities
-- separate strategy and execution timeframes
-- causal strategy-candle completion timing
-- BID / ASK trade simulation
-- stop-loss / take-profit execution
-- conservative same-candle SL/TP ordering
-- generic executable trade intents
-- trade records and summary metrics
-- a complete ORB implementation
-- focused deterministic tests and a real D1 ORB regression run
-
-## Core architecture
+The long-term flow is:
 
 ```text
-OANDA
-  |
-  v
-Cloudflare D1
-  |
-  v
-Candle Reader
-  |
-  v
-Backtest Service
-  |---------------------------|
-  v                           v
-Strategy Candles        Execution Candles
-  |                           |
-  v                           |
-Strategy Context              |
-  |                           |
-  v                           |
-Strategy                      |
-  |                           |
-  v                           |
-Trade Intent -----------------|
-              |
-              v
-        Backtest Runner
-              |
-              v
-        Trades + Summary
+Existing strategy / Pine Script
+        |
+        v
+Strategy input / translation
+        |
+        v
+Internal strategy contract
+        |
+        v
+Human Backtesting V1
+        |
+        v
+Parameter research
+        |
+        v
+Human web UI
+        |
+        +------> later Pine ingestion
+        |
+        +------> later AI research agent
 ```
 
-`runBacktestJob()` is the main service seam. It accepts the market, timeframes, dates and strategy; loads the required candles; resolves instrument metadata; runs the engine; and returns structured results.
+The most important principle is that **the backtester is the foundation, not the final product**.
 
-## Market data
+## Milestone status
 
-Historical data is stored centrally in D1 so backtests do not repeatedly download the same market history.
+### Completed — Historical data foundation
 
-The database design is instrument-sharded rather than timeframe-sharded. For example, one EUR/USD database can contain both M1 and M5 rows.
+- OANDA historical candles stored in Cloudflare D1
+- BID / ASK / MID OHLC data
+- native EUR/USD M1 and M5 datasets proven end-to-end
+- generic instrument metadata and D1 selection
+- chronological keyset-paged candle reading
+- reusable historical data rather than repeatedly downloading from OANDA
 
-D1 database selection uses environment variables such as:
+### Completed — Human Backtesting V1
+
+The engine is now good enough for a human to manually port a reasonably typical automated strategy into JavaScript and perform serious historical parameter research without redesigning the core.
+
+It supports:
+
+- multiple simultaneous trades
+- HEDGING and NETTING modes
+- market, limit, stop and stop-limit orders
+- GTC, DAY, IOC and FOK lifecycle rules
+- partial exits
+- explicit strategy exits
+- dynamic stop and target updates/removal
+- fixed units, cash, percent-equity and risk-percent sizing
+- balance, equity, realised/unrealised P&L
+- leverage, margin, free margin and buying-power rejection
+- drawdown, daily-loss and margin-related risk controls
+- bid/ask-aware execution
+- slippage and commissions
+- deterministic same-candle conflict policy
+- strategy/account/execution configuration separation
+- generic multi-parameter Cartesian sweeps
+- pre-run combination counting and validation
+- warning and maximum run limits
+- one D1 dataset load reused across every run in an experiment
+- structured schema-v5 experiment JSON
+- yearly/monthly summaries
+- causal/conservative MFE, MAE and holding-time diagnostics
+- common indicator helpers: SMA, EMA, RMA, ATR, RSI, rolling high/low, standard deviation, crossover/crossunder and confirmed pivots
+
+The final Human V1 acceptance experiment successfully loaded three months of EUR/USD M5/M1 history once and ran six account-aware ORB configurations with no failed runs.
+
+## The simplest mental model
 
 ```text
-CLOUDFLARE_D1_EUR_USD_DATABASE_ID
-CLOUDFLARE_D1_GBP_USD_DATABASE_ID
+Historical data
+      |
+      v
+Strategy definition ----> Strategy parameters
+      |                         |
+      v                         v
+Strategy runtime         Parameter combinations
+      |                         |
+      +------------+------------+
+                   |
+                   v
+             Backtest engine
+                   |
+                   v
+          Account + execution
+                   |
+                   v
+          Structured run result
+                   |
+                   v
+             Research engine
+                   |
+                   v
+          Experiment result JSON
 ```
 
-The canonical schema contains:
+### Strategy definition vs strategy runtime
 
-```text
-candles
-import_progress
-```
+A strategy has two pieces.
 
-The importer is generic over instrument, granularity and date range.
-
-## Price model
-
-Strategy calculations use MID prices.
-
-Execution uses the real side of the spread:
-
-```text
-LONG  enter ASK, exit BID
-SHORT enter BID, exit ASK
-```
-
-This keeps chart-style strategy logic separate from execution realism.
-
-## Strategy and execution timeframes
-
-A backtest job can use different timeframes for decisions and execution:
-
-```javascript
-runBacktestJob({
-  instrument: "EUR_USD",
-  strategyTimeframe: "M5",
-  executionTimeframe: "M1",
-  from,
-  to,
-  strategy
-});
-```
-
-An OANDA candle timestamp represents the candle start. Therefore an M5 candle stamped 09:15 is not available to the strategy until 09:20.
-
-The engine processes the completed strategy candle when its close time has been reached, then allows the trade to enter at the first eligible execution-candle open.
-
-This prevents lookahead while allowing lower-timeframe execution to resolve intrabar price sequencing.
-
-A deterministic regression test proves this distinction: an M5 bar can contain both stop and target, while the M1 sequence can show which occurred first.
-
-## Strategy contract
-
-A strategy exposes:
+The **runtime strategy** contains trading logic:
 
 ```javascript
 {
-  name,
-  reset(),
-  onCandle(context)
+    name: "My Strategy",
+    reset() { ... },
+    onCandle(context) { ... }
 }
 ```
 
-The context provides the current completed strategy candle, history helpers, instrument and timeframe. Positive future offsets are blocked.
-
-The strategy returns an executable trade intent rather than engine-specific or ORB-specific fields.
-
-Example:
+The **strategy definition** describes what can be configured and swept:
 
 ```javascript
 {
-  action: "ENTER",
-  side: "LONG",
-  stopLoss: {
-    type: "PIPS",
-    value: 10
-  },
-  takeProfit: {
-    type: "PRICE",
-    value: 1.0915
-  }
+    id: "ema-cross",
+    name: "EMA Cross",
+    version: 1,
+    createStrategy,
+    parameters: {
+        fastLength: { type: "integer", default: 20, min: 1 },
+        slowLength: { type: "integer", default: 50, min: 2 }
+    }
 }
 ```
 
-The current contract supports:
+That distinction solves an important product problem: every strategy can have different parameters while still using the same research engine and future web UI.
+
+## How to test a strategy today
+
+### Existing ORB strategy
+
+The current usable entry point is:
 
 ```text
-ENTER
-LONG / SHORT
-PIPS / PRICE levels
+src/experiments/orb-sweep.js
 ```
 
-Indicator concepts such as ATR should remain inside the strategy. The strategy calculates the desired level and gives the engine a concrete executable instruction.
-
-## ORB
-
-The ORB strategy lives under:
+That file contains:
 
 ```text
-src/strategies/orb/
+backtestConfig      market + dates + timeframes
+accountConfig       balance + leverage + sizing + risk controls
+executionPolicy     slippage + commission + fill assumptions
+baseStrategyConfig  one normal set of strategy parameters
+parameterGrid       values to sweep
+policy              experiment run-count limits
 ```
 
-with:
+Run it with:
 
 ```text
-opening-range.js
-daily-opening-range.js
-breakout-detector.js
-orb-strategy.js
+npm run research:orb
 ```
 
-It currently:
+### New strategy
 
-1. identifies the configured local opening-range session;
-2. collects MID high/low values;
-3. freezes the range when complete;
-4. resets by local trading day;
-5. detects the first breakout above or below the range;
-6. converts the breakout into LONG or SHORT;
-7. emits a generic trade intent with configured stop and target.
-
-The retained real-data regression run uses:
+Today a new strategy must be manually ported into JavaScript:
 
 ```text
-Instrument:       EUR_USD
-Strategy TF:      M5
-Execution TF:     M5
-Range start:      08:15 America/New_York
-Range duration:   60 minutes
-Stop:             10 pips
-Target:           20 pips
-Window:           2026-08-01 to 2026-09-01
-Known result:     17 trades
+TradingView / strategy idea
+        |
+        v
+src/strategies/my-strategy/
+    my-strategy.js
+    my-strategy-definition.js
+        |
+        v
+small deterministic test
+        |
+        v
+real-data smoke test
+        |
+        v
+parameter experiment
 ```
 
-This known result is useful for detecting accidental behavioural changes during refactors.
+This manual porting step is acceptable for the current personal tool. Pine ingestion comes later.
 
-## Current repository shape
+## Experiment configuration — what is universal
+
+Account, execution and research settings are generic and apply to any strategy.
+
+### Account configuration
 
 ```text
-src/
-  backtest/
-  data/
-  market/
-  strategies/
-    orb/
-    strategy-interface.js
-    trade-intent.js
-  time/
-  tests/
-  import-history.js
+initialCapital
+currency
+quoteToAccountRate
+leverage
+positionMode
+riskTimeZone
+marginCallLevelPercent
 
-schema.sql
-package.json
-package-lock.json
+defaultSizing.type:
+  UNITS
+  CASH
+  PERCENT_EQUITY
+  RISK_PERCENT
+
+risk:
+  maxOpenTrades
+  maxTradesPerSide
+  maxPositionUnits
+  maxGrossExposure
+  maxMarginUsagePercent
+  maxDrawdownPercent
+  maxDailyLossPercent
+  breachAction
 ```
 
-The project was cleaned up after the initial build phase so obsolete test scaffolding and historical migration clutter do not become permanent architecture.
+`positionMode` is either `HEDGING` or `NETTING`.
 
-## Tests
-
-The simplified commands are:
+`breachAction` is either:
 
 ```text
-npm test
-npm run test:data
-npm run test:orb
+HALT_NEW_ENTRIES
+CLOSE_ALL_AND_HALT
 ```
 
-`npm test` runs the deterministic engine/domain tests.
+`RISK_PERCENT` sizing means the engine sizes the position so the configured stop represents that percentage of current equity. It therefore requires a stop.
 
-`npm run test:data` validates D1 candle reading.
+### Execution configuration
 
-`npm run test:orb` runs the real EUR/USD ORB integration regression.
+```text
+sameCandleConflict:
+  STOP_FIRST
+  TARGET_FIRST
 
-## Next development phase
+slippagePips
 
-The next goal is not more execution plumbing. It is to turn the backtester into a research engine.
+commission.type:
+  NONE
+  PIPS_PER_SIDE
+  FIXED_PER_ORDER
+  PERCENT_NOTIONAL
 
-### Step 1 — Strategy configuration
+closeOpenTradesAtEnd
+rejectOnInsufficientMargin
+defaultTimeInForce:
+  GTC
+  DAY
+  IOC
+  FOK
+```
 
-Move run-specific strategy parameter values into plain configuration data.
+### Research policy
 
-Conceptually:
+```text
+warningRunCount
+maximumRunCount
+overrideLimits
+```
+
+The engine counts parameter combinations before executing the experiment.
+
+## What is strategy-specific
+
+Only the strategy itself defines its own parameter catalogue.
+
+ORB currently exposes:
+
+```text
+startHour
+startMinute
+durationMinutes
+timeZone
+stopLossPips
+takeProfitPips
+```
+
+Another strategy might expose:
+
+```text
+fastEma
+slowEma
+atrLength
+stopAtrMultiplier
+targetAtrMultiplier
+rsiFilter
+```
+
+The generic research layer does not need to know those names. It asks the chosen strategy definition what is valid.
+
+This is the intended basis of the future browser UI: choose a strategy, then dynamically render the fields from that strategy's definition.
+
+## Current limitations
+
+Human Backtesting V1 deliberately does **not** yet provide:
+
+```text
+browser UI
+single simple research.config.js workflow
+Pine parser / full Pine runtime
+AI research agent
+true synchronized multi-instrument execution
+tick simulation
+order-book simulation
+dynamic historical account-currency conversion
+broker-specific margin models
+```
+
+A backtest currently represents one instrument dataset. Multiple trades can be open simultaneously within that instrument.
+
+If account currency differs from the instrument quote currency, an explicit fixed `quoteToAccountRate` is required. The engine does not invent historical FX conversion rates.
+
+## Next milestone — Usable Research Platform V1
+
+The next milestone should make the existing engine easy to use, not add more speculative execution features.
+
+### Phase 1 — One obvious research configuration
+
+Create one generic config such as:
 
 ```javascript
-{
-  strategy: "ORB",
-  parameters: {
-    startHour: 8,
-    startMinute: 15,
-    durationMinutes: 60,
-    stopLossPips: 10,
-    takeProfitPips: 20
-  }
-}
+export default {
+    strategy: "orb",
+
+    market: {
+        instrument: "EUR_USD",
+        strategyTimeframe: "M5",
+        executionTimeframe: "M1",
+        from: "2022-01-01",
+        to: "2026-09-01"
+    },
+
+    account: {
+        initialCapital: 10000,
+        currency: "USD",
+        leverage: 30,
+        sizing: { type: "RISK_PERCENT", value: 1 }
+    },
+
+    strategyConfig: {
+        startHour: 8,
+        startMinute: 15,
+        durationMinutes: 60,
+        timeZone: "America/New_York",
+        stopLossPips: 10,
+        takeProfitPips: 20
+    },
+
+    parameterGrid: {
+        stopLossPips: [8, 10, 12],
+        takeProfitPips: [15, 20, 25],
+        durationMinutes: [30, 60, 90]
+    }
+};
 ```
 
-The strategy implementation remains code; the chosen parameter values become data.
-
-### Step 2 — Parameter sweeps
-
-Generate combinations such as:
+Then the normal human workflow becomes:
 
 ```text
-SL:       5, 10, 15, 20
-TP:       10, 20, 30, 40
-Duration: 30, 45, 60, 75
+edit research.config.js
+        |
+        v
+npm run research
+        |
+        v
+preview combination count
+        |
+        v
+load data once
+        |
+        v
+run experiment
+        |
+        v
+console + JSON result
 ```
 
-Run each configuration through the same deterministic backtest service and produce comparable summaries.
+### Phase 2 — Strategy registry / discoverability
 
-### Step 3 — Experiments and persistence
+Provide one central catalogue that maps a simple strategy ID such as `orb` to its strategy definition.
 
-Promote backtest runs into first-class research records containing:
+This should allow the runner and future UI to discover:
 
 ```text
-experiment
-run configuration
-summary
-trades
+available strategies
+strategy labels
+valid parameters
+parameter types
+min/max/default/options
 ```
 
-This will make comparisons reproducible rather than transient console output.
+Universal account/execution choices should likewise be exposed as configuration metadata rather than requiring the user to inspect validator source code.
 
-### Step 4 — AI tools
+### Phase 3 — Minimal human web UI
 
-The future AI agent should orchestrate deterministic tools, not inspect millions of candles itself.
+Once the configuration model is comfortable from the command line, put a browser on top of the exact same model.
 
-Likely tools include:
+The acceptance target is:
+
+> Open the app, choose ORB, choose EUR/USD and dates, choose parameter values, see the run count, start the experiment, see progress, and inspect/rank the results without editing JavaScript.
+
+The UI is a **research UI**, not a visual strategy builder.
+
+### Phase 4 — Job/persistence boundary as needed by the UI
+
+Long experiments should execute behind a job abstraction rather than holding one browser request open. Add only the infrastructure required to support the real human workflow.
+
+## Later milestones
+
+### Pine Ingestion V1
 
 ```text
-get_data_catalog()
-run_backtest()
-run_parameter_sweep()
-compare_runs()
-get_backtest_trades()
+Pine strategy
+    |
+    v
+supported parser / translator
+    |
+    v
+internal strategy + definition
+    |
+    v
+same backtest + research engine
 ```
 
-The research loop becomes:
+Do not promise arbitrary Pine compatibility initially.
+
+### AI Researcher V1
+
+The AI should call deterministic research tools rather than calculating over raw candle history itself.
+
+Likely tools:
+
+```text
+plan_experiment
+run_experiment
+compare_runs
+inspect_trades
+analyse_periods
+```
+
+The research loop then becomes:
 
 ```text
 hypothesis
-   -> backtest
-   -> inspect failures
-   -> refine
-   -> sweep
-   -> robustness checks
+ -> experiment
+ -> inspect
+ -> refine
+ -> robustness test
 ```
 
-### Step 5 — Pine ingestion
+## Immediate next actions
 
-Pine parsing comes after the research engine is stable.
+1. Keep Human Backtesting V1 frozen as the completed foundation.
+2. Start a new milestone/branch for Research Platform V1 rather than a "Batch 6" of engine work.
+3. Design the shape of one generic `research.config.js`.
+4. Add a strategy registry so `strategy: "orb"` resolves to the correct definition.
+5. Centralise discoverable metadata for universal account/execution options.
+6. Add a generic `npm run research` runner.
+7. Prove it by reproducing the current ORB smoke experiment without editing `orb-sweep.js`.
+8. Only then design the minimal browser form over the same configuration model.
 
-The eventual architecture is:
+## Guiding rules
 
-```text
-Pine Script
-   |
-   v
-parser / compiler
-   |
-   v
-internal strategy representation
-   |
-   v
-existing backtest + research platform
-```
+> The primary benefit is testing strategies, not designing them.
 
-The goal is to give Pine a stable execution target rather than building a parser before the platform underneath it is ready.
+> If a capability could be useful to many strategies, build it generically. If it describes how one strategy works, keep it inside that strategy.
 
-## Guiding rule
-
-> If a capability could be useful to many strategies, build it generically. If it describes how one particular strategy works, keep it inside that strategy.
-
-That rule remains the most important architectural constraint as the project grows.
+> The next layer should make the existing engine easier to use before making the engine itself more complicated.

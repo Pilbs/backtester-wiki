@@ -1,49 +1,19 @@
 <!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Forex Backtester project wiki - Market Data">
-  <title>Market Data · Forex Backtester Wiki</title>
-  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="assets/styles.css">
-</head>
-<body data-page="data.html">
-<header class="topbar"><button class="menu-button" id="menuButton" aria-label="Open navigation">☰</button><a class="brand" href="index.html"><span class="brand-mark">FB</span><span><strong>Forex Backtester</strong><small>Project Wiki</small></span></a><div class="topbar-meta"><span class="badge">Static documentation</span><span class="updated">Updated 4 Sep 2026</span></div></header>
-<div class="layout">
-<aside class="sidebar" id="sidebar"><div class="sidebar-search-wrap"><label class="sr-only" for="navSearch">Filter navigation</label><input id="navSearch" class="sidebar-search" type="search" placeholder="Filter pages…" autocomplete="off"></div><nav class="sidebar-nav" aria-label="Wiki navigation"><div class="nav-group"><div class="nav-group-title">Overview</div><a class="nav-link" href="index.html" data-search="home status">Home</a></div><div class="nav-group"><div class="nav-group-title">Platform</div><a class="nav-link active" href="data.html" data-search="market data d1 oanda">Market Data</a><a class="nav-link" href="engine.html" data-search="backtest engine execution">Backtest Engine</a><a class="nav-link" href="strategies.html" data-search="strategy development trade intent">Strategy Development</a><a class="nav-link" href="time.html" data-search="time sessions timeframe">Time &amp; Sessions</a></div><div class="nav-group"><div class="nav-group-title">Strategy Work</div><a class="nav-link" href="orb.html" data-search="orb opening range breakout">ORB Strategy</a></div><div class="nav-group"><div class="nav-group-title">Project</div><a class="nav-link" href="architecture.html" data-search="architecture">Architecture</a><a class="nav-link" href="roadmap.html" data-search="roadmap research sweeps ai pine">Roadmap</a></div></nav><div class="sidebar-footer"><span>Generic platform first.</span><span>Strategies remain isolated.</span></div></aside>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Forex Backtester project wiki - Market Data"><title>Market Data · Forex Backtester Wiki</title><link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="assets/styles.css"></head>
+<body data-page="data.html"><header class="topbar"><button class="menu-button" id="menuButton" aria-label="Open navigation">☰</button><a class="brand" href="index.html"><span class="brand-mark">FB</span><span><strong>Forex Backtester</strong><small>Project Wiki</small></span></a><div class="topbar-meta"><span class="badge">Market data</span><span class="updated">Updated 5 Sep 2026</span></div></header>
+<div class="layout"><aside class="sidebar" id="sidebar"><div class="sidebar-search-wrap"><label class="sr-only" for="navSearch">Filter navigation</label><input id="navSearch" class="sidebar-search" type="search" placeholder="Filter pages…" autocomplete="off"></div><nav class="sidebar-nav" aria-label="Wiki navigation"><div class="nav-group"><div class="nav-group-title">Overview</div><a class="nav-link" href="index.html" data-search="home status product focus">Home</a></div><div class="nav-group"><div class="nav-group-title">Platform</div><a class="nav-link active" href="data.html" data-search="market data d1 oanda">Market Data</a><a class="nav-link" href="engine.html" data-search="backtest engine account execution">Backtest Engine</a><a class="nav-link" href="strategies.html" data-search="strategy development definition indicators">Strategy Development</a><a class="nav-link" href="research.html" data-search="research experiments config parameters sweep">Research &amp; Experiments</a><a class="nav-link" href="time.html" data-search="time sessions timeframe">Time &amp; Sessions</a></div><div class="nav-group"><div class="nav-group-title">Strategy Work</div><a class="nav-link" href="orb.html" data-search="orb opening range breakout acceptance">ORB Strategy</a></div><div class="nav-group"><div class="nav-group-title">Project</div><a class="nav-link" href="architecture.html" data-search="architecture mental model">Architecture</a><a class="nav-link" href="roadmap.html" data-search="roadmap next milestone web ui pine ai">Roadmap</a></div></nav><div class="sidebar-footer"><span>Primary benefit: test strategies.</span><span>Research first, not charting.</span></div></aside>
 <main class="content"><div class="breadcrumbs"><a href="index.html">Wiki</a><span>›</span><span>Market Data</span></div><article class="article"><div class="article-heading"><p class="eyebrow">Forex Backtester</p><h1>Market Data</h1></div><div class="prose">
-<h2 id="storage-model">Storage Model</h2>
-<p>Historical candles are stored in Cloudflare D1. The current EUR/USD database contains native OANDA M1 and M5 candles. The design is to shard by instrument rather than by timeframe, so one instrument database can contain multiple granularities.</p>
-<pre><code class="language-text">EUR_USD database
-  candles: M1, M5, future native timeframes
-
-GBP_USD database
-  candles: M1, M5, ...
-</code></pre>
-<p>The <code>instrument</code> and <code>granularity</code> columns remain part of the candle key even though each database is conceptually an instrument shard.</p>
-<h2 id="candle-shape">Candle Shape</h2>
-<p>OANDA candles are normalised into a common structure containing time, volume and BID / ASK / MID OHLC values.</p>
-<pre><code class="language-javascript">{
+<h2 id="storage">Storage Model</h2><p>Historical candles are stored centrally in Cloudflare D1 so parameter experiments reuse the same data instead of repeatedly downloading from OANDA.</p><p>The design is instrument-sharded: one instrument database can hold multiple native granularities.</p>
+<h2 id="shape">Candle Shape</h2><pre><code class="language-javascript">{
   time,
   volume,
   bid: { open, high, low, close },
   ask: { open, high, low, close },
   mid: { open, high, low, close }
 }
-</code></pre>
-<p>Strategy calculations use MID. Trade execution uses BID / ASK so spread is represented naturally.</p>
-<h2 id="database-selection">Database Selection</h2>
-<p>The D1 client resolves the database from the instrument using environment variables such as:</p>
-<pre><code class="language-text">CLOUDFLARE_D1_EUR_USD_DATABASE_ID
-CLOUDFLARE_D1_GBP_USD_DATABASE_ID
-</code></pre>
-<p>This keeps database selection generic as more instruments are added.</p>
-<h2 id="historical-import">Historical Import</h2>
-<p>The importer is generic over instrument, granularity and date range. Import progress is stored in the same D1 database so a historical load can resume after interruption.</p>
-<pre><code class="language-text">npm run import-history -- EUR_USD M5 2021-01-03 2026-09-01
-</code></pre>
-<p>The canonical schema contains two tables: <code>candles</code> and <code>import_progress</code>.</p>
-<h2 id="candle-reader">Candle Reader</h2>
-<p><code>src/data/candle-reader.js</code> returns chronological candles for a requested instrument, timeframe and date window. It uses keyset paging so callers do not need to care how many D1 query pages are required.</p>
-</div></article><footer class="page-footer">Forex Backtester Project Wiki · Static HTML · GitHub + Cloudflare Pages</footer></main>
-<aside class="toc" aria-label="On this page"><div class="toc-inner"><div class="toc-title">On this page</div><a class="toc-link h2" href="#storage-model">Storage Model</a><a class="toc-link h2" href="#candle-shape">Candle Shape</a><a class="toc-link h2" href="#database-selection">Database Selection</a><a class="toc-link h2" href="#historical-import">Historical Import</a><a class="toc-link h2" href="#candle-reader">Candle Reader</a></div></aside>
-</div><div class="scrim" id="scrim"></div><script src="assets/wiki.js"></script></body></html>
+</code></pre><p>Strategy calculations normally use MID. Execution uses BID / ASK.</p>
+<h2 id="proven">What Is Proven Today</h2><p>EUR/USD is the proven end-to-end research dataset. Native M1 and M5 history are available for the backtester, including the accepted M5-strategy/M1-execution experiment path.</p><p>The engine has metadata entries for additional FX instruments, but engine metadata is not the same thing as having fully loaded/validated D1 history. Treat EUR/USD as the known-good data product until another instrument is imported and regression-tested.</p>
+<h2 id="reader">Candle Reader</h2><p><code>src/data/candle-reader.js</code> reads one exact stored instrument/granularity/date window using keyset paging. The research experiment loads strategy and execution datasets once, then reuses them across every parameter combination.</p><p>If strategy and execution timeframes are the same, the service reuses the same candle array rather than loading twice.</p>
+<h2 id="timeframes">Timeframe Reality</h2><p>The fixed-timeframe parser understands S/M/H durations, but a requested timeframe must actually exist in D1. Typing <code>M15</code> does not cause the candle reader to aggregate M1 data automatically.</p><p>This explicit model avoids accidental differences between native broker candles and locally aggregated candles.</p>
+<h2 id="currency">Account Currency Note</h2><p>For EUR/USD with a USD account, quote-to-account conversion is 1. If account currency differs from quote currency, Human Backtesting V1 requires an explicit fixed <code>quoteToAccountRate</code>. Dynamic historical currency conversion is not yet implemented.</p>
+</div></article><footer class="page-footer">Forex Backtester Project Wiki · GitHub + Cloudflare Pages</footer></main><aside class="toc"><div class="toc-inner"><div class="toc-title">On this page</div><a class="toc-link h2" href="#storage">Storage</a><a class="toc-link h2" href="#shape">Candle Shape</a><a class="toc-link h2" href="#proven">Proven Data</a><a class="toc-link h2" href="#reader">Reader</a><a class="toc-link h2" href="#timeframes">Timeframes</a><a class="toc-link h2" href="#currency">Currency</a></div></aside></div><div class="scrim" id="scrim"></div><script src="assets/wiki.js"></script></body></html>

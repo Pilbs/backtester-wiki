@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Forex Backtester project wiki - Research and Experiments"><title>Research &amp; Experiments · Forex Backtester Wiki</title><link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="assets/styles.css"></head>
+<body data-page="research.html"><header class="topbar"><button class="menu-button" id="menuButton" aria-label="Open navigation">☰</button><a class="brand" href="index.html"><span class="brand-mark">FB</span><span><strong>Forex Backtester</strong><small>Project Wiki</small></span></a><div class="topbar-meta"><span class="badge">Research workflow</span><span class="updated">Updated 5 Sep 2026</span></div></header>
+<div class="layout"><aside class="sidebar" id="sidebar"><div class="sidebar-search-wrap"><label class="sr-only" for="navSearch">Filter navigation</label><input id="navSearch" class="sidebar-search" type="search" placeholder="Filter pages…" autocomplete="off"></div><nav class="sidebar-nav" aria-label="Wiki navigation"><div class="nav-group"><div class="nav-group-title">Overview</div><a class="nav-link" href="index.html" data-search="home status product focus">Home</a></div><div class="nav-group"><div class="nav-group-title">Platform</div><a class="nav-link" href="data.html" data-search="market data d1 oanda">Market Data</a><a class="nav-link" href="engine.html" data-search="backtest engine account execution">Backtest Engine</a><a class="nav-link" href="strategies.html" data-search="strategy development definition indicators">Strategy Development</a><a class="nav-link active" href="research.html" data-search="research experiments config parameters sweep">Research &amp; Experiments</a><a class="nav-link" href="time.html" data-search="time sessions timeframe">Time &amp; Sessions</a></div><div class="nav-group"><div class="nav-group-title">Strategy Work</div><a class="nav-link" href="orb.html" data-search="orb opening range breakout acceptance">ORB Strategy</a></div><div class="nav-group"><div class="nav-group-title">Project</div><a class="nav-link" href="architecture.html" data-search="architecture mental model">Architecture</a><a class="nav-link" href="roadmap.html" data-search="roadmap next milestone web ui pine ai">Roadmap</a></div></nav><div class="sidebar-footer"><span>Primary benefit: test strategies.</span><span>Research first, not charting.</span></div></aside>
+<main class="content"><div class="breadcrumbs"><a href="index.html">Wiki</a><span>›</span><span>Research &amp; Experiments</span></div><article class="article"><div class="article-heading"><p class="eyebrow">Forex Backtester</p><h1>Research &amp; Experiments</h1></div><div class="prose">
+<h2 id="today">How Research Works Today</h2><p>The high-level research entry point is <code>runBacktestExperiment()</code>. It validates the experiment, loads the requested dataset once, generates valid parameter combinations, creates a fresh strategy for each run, executes every run against the same in-memory data, and returns one structured experiment result.</p><pre><code class="language-text">experiment config
+      |
+      v
+plan + validate combinations
+      |
+      v
+load D1 dataset once
+      |
+      +--> run 1
+      +--> run 2
+      +--> run 3
+      +--> ...
+      |
+      v
+schema-v5 experiment JSON
+</code></pre><p>For ORB, the current human-facing entry point is <code>src/experiments/orb-sweep.js</code>. Run it with <code>npm run research:orb</code>.</p>
+<h2 id="config-sections">Experiment Config Sections</h2><p>The current experiment code is split into five important areas. The first four are generic; only strategy parameters differ by strategy.</p><table><thead><tr><th>Section</th><th>Purpose</th></tr></thead><tbody><tr><td><code>backtestConfig</code></td><td>Instrument, date range, strategy timeframe and execution timeframe.</td></tr><tr><td><code>accountConfig</code></td><td>Starting balance, account currency, leverage, sizing and risk limits.</td></tr><tr><td><code>executionPolicy</code></td><td>Same-candle rule, slippage, commission and order handling assumptions.</td></tr><tr><td><code>policy</code></td><td>Research warning/maximum run limits.</td></tr><tr><td><code>baseStrategyConfig</code> + <code>parameterGrid</code></td><td>Values defined by the chosen strategy's own definition.</td></tr></tbody></table>
+<h2 id="account">Account Config Options</h2><pre><code class="language-text">initialCapital          positive number
+currency                3-letter code, e.g. USD / GBP
+quoteToAccountRate      fixed positive conversion rate when needed
+leverage                positive number, e.g. 30 = 30:1
+positionMode            HEDGING | NETTING
+riskTimeZone            IANA timezone, default UTC
+marginCallLevelPercent  positive number or null
+
+defaultSizing.type      UNITS | CASH | PERCENT_EQUITY | RISK_PERCENT
+defaultSizing.value     positive number
+
+risk.maxOpenTrades
+risk.maxTradesPerSide
+risk.maxPositionUnits
+risk.maxGrossExposure
+risk.maxMarginUsagePercent
+risk.maxDrawdownPercent
+risk.maxDailyLossPercent
+risk.breachAction       HALT_NEW_ENTRIES | CLOSE_ALL_AND_HALT
+</code></pre><p><strong>RISK_PERCENT</strong> is normally the most intuitive strategy-research sizing mode. A value of <code>1</code> means the engine sizes the position so that the configured stop represents about 1% of current equity. It requires a stop.</p><p><strong>PERCENT_EQUITY</strong> is different: it sizes the notional position using a percentage of equity; it is not risk at the stop.</p>
+<h2 id="execution">Execution Policy Options</h2><pre><code class="language-text">sameCandleConflict      STOP_FIRST | TARGET_FIRST
+slippagePips            non-negative number
+commission.type         NONE | PIPS_PER_SIDE | FIXED_PER_ORDER | PERCENT_NOTIONAL
+commission.value        non-negative number
+closeOpenTradesAtEnd    true | false
+rejectOnInsufficientMargin true | false
+defaultTimeInForce      GTC | DAY | IOC | FOK
+</code></pre><p><code>STOP_FIRST</code> is the conservative default when one OHLC execution candle touches both stop and target and the true intrabar order is unknowable.</p>
+<h2 id="research-policy">Research Policy</h2><pre><code class="language-text">warningRunCount  default 250
+maximumRunCount  default 5000
+overrideLimits   developer override when intentionally exceeding the maximum
+</code></pre><p>The Cartesian combination count is calculated before the experiment runs. Duplicate values in a sweep dimension are rejected.</p>
+<h2 id="strategy-parameters">Strategy-Specific Parameters</h2><p>The main config does not need to know every possible strategy parameter. The selected strategy definition owns that information.</p><p>ORB currently exposes:</p><pre><code class="language-text">startHour
+startMinute
+durationMinutes
+timeZone
+stopLossPips
+takeProfitPips
+</code></pre><p>A different strategy can expose completely different fields. Its definition supplies type, defaults, min/max/options and any cross-parameter validation. This is also how a future UI can build strategy-specific forms dynamically.</p>
+<h2 id="example">Example ORB Sweep</h2><pre><code class="language-javascript">baseStrategyConfig: {
+    startHour: 8,
+    startMinute: 15,
+    durationMinutes: 60,
+    timeZone: "America/New_York",
+    stopLossPips: 10,
+    takeProfitPips: 20,
+},
+
+parameterGrid: {
+    durationMinutes: [30, 60, 90],
+    stopLossPips: [8, 10, 12],
+    takeProfitPips: [15, 20, 25],
+}
+</code></pre><p>This requests <strong>27 backtests</strong>: 3 × 3 × 3.</p>
+<h2 id="results">What Comes Back</h2><p>Each completed run records its exact strategy config, summary, yearly/monthly breakdown, rejection reason counts, dataset metadata and elapsed time. Optional trade detail includes holding time plus causal/conservative MFE and MAE.</p><p>Important summary fields include total trades, win rate, pips P&amp;L, account P&amp;L, return %, profit factor, expectancy and drawdown.</p>
+<h2 id="next">Why the Next Milestone Exists</h2><p>The current engine is capable, but the user must know where these settings live. The next milestone will turn this into one obvious <code>research.config.js</code> plus <code>npm run research</code>. The browser UI will later be a visual editor for exactly the same model rather than a separate architecture.</p>
+</div></article><footer class="page-footer">Forex Backtester Project Wiki · GitHub + Cloudflare Pages</footer></main><aside class="toc"><div class="toc-inner"><div class="toc-title">On this page</div><a class="toc-link h2" href="#today">How It Works</a><a class="toc-link h2" href="#config-sections">Config Sections</a><a class="toc-link h2" href="#account">Account Config</a><a class="toc-link h2" href="#execution">Execution Policy</a><a class="toc-link h2" href="#research-policy">Research Policy</a><a class="toc-link h2" href="#strategy-parameters">Strategy Parameters</a><a class="toc-link h2" href="#example">Example</a><a class="toc-link h2" href="#results">Results</a><a class="toc-link h2" href="#next">Next</a></div></aside></div><div class="scrim" id="scrim"></div><script src="assets/wiki.js"></script></body></html>
